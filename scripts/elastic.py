@@ -5,6 +5,7 @@ Module with some convenience code for acessing an ELastic Search index.
 """
 
 from pprint import pprint
+from collections import Counter
 
 from elasticsearch import Elasticsearch 
 from elasticsearch.exceptions import NotFoundError
@@ -24,35 +25,67 @@ class Index(object):
             identifier = i if docid is None else docid
             self.es.index(index=self.index, id=identifier, body=element)
 
-    def print_sources(self, result, dribble):
-        if dribble:
-            sources = self.get_sources(result)
-            print('   Got %d hits' % result['hits']['total']['value'])
-            for source in sources:
-                print '  ', source
-
-    def get_hits(self, result):
-        return [hit for hit in result['hits']['hits']]
-
-    def get_sources(self, result):
-        return [hit['_source'] for hit in result['hits']['hits']]
-
     def get(self, message, doc_id, dribble=False):
-        print "\n%s" % message
+        print("\n%s" % message)
         try:
             doc = self.es.get(index=self.index, id=doc_id)
             if dribble:
                 pprint(doc['_source'])
             return doc
         except NotFoundError as e:
-            print e
+            print(e)
 
     def search(self, message, query, dribble=False):
-        print "\n%s" % message
-        result = self.es.search(index=self.index, body=query)
-        self.print_sources(result, dribble)
+        print("\n%s" % message)
+        result = Result(self.es.search(index=self.index, body=query))
+        result.print_sources(dribble)
         return result
+
+
+class Result(object):
+
+    """Class to wrap an ElasticSearch result."""
     
+    def __init__(self, result):
+        self.result = result
+        self.hits = [Hit(hit) for hit in self.result['hits']['hits']]
+        self.total_hits = self.result['hits']['total']['value']
+        self.sources = [hit.source for hit in self.hits]
+
+    def write(self):
+        fname = "%04d.txt" % nextint()
+        with codecs.open(fname, 'w', encoding='utf8') as fh:
+            fh.write(json.dumps(self.result, sort_keys=True, indent=4))
+
+    def pp(self):
+        print("\n    Number of hits: %d" % self.total_hits)
+        for hit in self.hits:
+            print("    %s  %.4f  %s" % (hit.docid, hit.score, hit.docname[:80]))
+
+    def print_sources(self, dribble):
+        if dribble:
+            sources = self.sources
+            print('   Got %d hits' % self.total_hits)
+            for source in self.sources:
+                print('   %s' % source)
+
+
+class Hit(object):
+
+    def __init__(self, hit):
+        self.hit = hit
+        self.id = hit['_id']
+        self.score = hit['_score']
+        self.source = hit['_source']
+        self.docid = self.source.get('docid')
+        self.docname = self.source.get('docname')
+
+
+def nextint(data=Counter()):
+    data['count'] += 1
+    return data['count']
+
+
 
 if __name__ == '__main__':
 

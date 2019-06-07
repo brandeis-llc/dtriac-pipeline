@@ -26,7 +26,7 @@ SOURCES = '/Users/marc/Desktop/projects/dtra/dtra-534/spv1-results-ela'
 def read_documents(document_directory):
     documents = []
     for fname in sorted(os.listdir(document_directory)):
-        print fname
+        print(fname)
         fname = os.path.join(document_directory, fname)
         json_obj = json.loads(codecs.open(fname, encoding='utf8').read())
         documents.append(json_obj)
