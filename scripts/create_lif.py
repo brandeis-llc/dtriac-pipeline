@@ -4,22 +4,14 @@ Create LIF files from the Science Parse output.
 
 Usage:
 
-$ python create_lif.py DIRECTORY
+$ python create_lif.py JSON_DIR LIF_DIR TXT_DIR
 
-The directory is the local path the https://github.com/keighrim/dtra-534
-repository.
-
-Given the location of this script DIRECTORY is usually "..".
-
-This code runs on files in DIRECTORY/samples/small-25-json and creates LIF files
-in DIRECTORY/samples/small-25-lif and TXT files in DIRECTORY/samples/small-25-lif.
+The first directory is the one with JSON files created by science parse, the
+second the target for LIF files and the third the target for TXT files.
 
 Should work for both Python2 and Python3.
 
 """
-
-# TODO: adapt this so it can also run on DIRECTORY/spv1-results and produce
-#       results in DIRECTORY/spv1-results-lif andDIRECTORY/spv1-results-txt
 
 
 import os
@@ -37,9 +29,6 @@ except ImportError:
     from io import StringIO
 
 from lif import LIF, Container, View, Annotation
-
-
-DTRA_REPO = '/Users/marc/Desktop/projects/dtra/dtra-534'
 
 
 def read_sample(fname):
@@ -64,7 +53,7 @@ def copy_files_to_sample(json_files, target_dir):
     extension = '.pdf.json'
     print("Copying files to %s" % target_dir)
     for json_file in json_files.values():
-        target_file = os.path.basename(json_file)[:-len(extension)] + '.lif'
+        target_file = os.path.basename(json_file)[:-len(extension)] + '.json'
         print("... %s" % target_file)
         target_file = os.path.join(target_dir, target_file)
         shutil.copyfile(json_file, target_file)
@@ -73,8 +62,8 @@ def copy_files_to_sample(json_files, target_dir):
 def create_lif_files(science_parse_dir, lif_dir, txt_dir, test=False):
     for fname in os.listdir(science_parse_dir):
         create_lif_file(os.path.join(science_parse_dir, fname),
-                        os.path.join(lif_dir,fname),
-                        os.path.join(txt_dir,fname[:-4] + '.txt'),
+                        os.path.join(lif_dir, fname[:-5] + '.lif'),
+                        os.path.join(txt_dir, fname[:-5] + '.txt'),
                         test)
 
 
@@ -178,19 +167,16 @@ def vocab(annotation_type):
         
 if __name__ == '__main__':
 
-    dtra_repo = DTRA_REPO
-    if len(sys.argv) > 1:
-        dtra_repo = sys.argv[1]
+    # One off code to add the 25 files from the sample to samples/small-25-json
+    if False:
+        repo = '/Users/marc/Desktop/projects/dtra/dtra-534'
+        science_parse_full_dir = '../spv1-results'
+        science_parse_sample_dir = '../samples/small-25-json'
+        fnames = read_sample('../sample-files.txt')
+        json_files = get_files(fnames, science_parse_full_dir, '.pdf.json')
+        copy_files_to_sample(json_files, science_parse_sample_dir)
 
-    sample_file = os.path.join(dtra_repo, 'sample-files.txt')
-    science_parse_full_dir = os.path.join(dtra_repo, 'spv1-results')
-    science_parse_sample_dir = os.path.join(dtra_repo, 'samples', 'small-25-json')
-    lif_target_dir = os.path.join(dtra_repo, 'samples', 'small-25-lif')
-    txt_target_dir = os.path.join(dtra_repo, 'samples', 'small-25-txt')
-
-    # Add the 25 files from the sample to samples/small-25-json
-    # fnames = read_sample(sample_file)
-    # json_files = get_files(fnames, science_parse_full_dir, '.pdf.json')
-    # copy_files_to_sample(json_files, science_parse_sample_dir)
-
-    create_lif_files(science_parse_sample_dir, lif_target_dir, txt_target_dir, test=True)
+    science_parse_dir = sys.argv[1]
+    lif_dir = sys.argv[2]
+    txt_dir = sys.argv[3]
+    create_lif_files(science_parse_dir, lif_dir, txt_dir, test=False)
