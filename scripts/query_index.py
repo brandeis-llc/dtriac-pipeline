@@ -34,7 +34,7 @@ queries = [
     ["(event:acquisition)", query("event:acquisition")],
     ["(person:Markov)    ", query("person:Markov")],
     ["(location:Italy)   ", query("location:Italy")],
-
+    ["pred:involves", query("relation.pred:involves")],
     ["(location:Italy AND person:Markov)", query_and(["person:Markov", "location:Italy"])],
     ["(location:Italy OR person:Markov) ", query_or(["person:Markov", "location:Italy"])],
 ]

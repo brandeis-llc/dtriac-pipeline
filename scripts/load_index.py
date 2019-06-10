@@ -41,5 +41,5 @@ if __name__ == '__main__':
         index_name = sys.argv[1]
         source_directory = sys.argv[2]
     docs = read_documents(source_directory)
-    idx = Index('demo')
+    idx = Index(index_name)
     idx.load(docs)
