@@ -71,6 +71,8 @@ def print_files(fnames, lif_files, ner_files, tex_files, ttk_files, rel_files):
 def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
                      rel_files, ela):
     for fname in sorted(fnames):
+        Section.ID = 0
+        Sentence.ID = 0
         doc = Document(fname,
                        lif_files[fname], ner_files[fname],
                        tex_files[fname], ttk_files[fname], rel_files[fname])
