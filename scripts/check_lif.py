@@ -35,7 +35,8 @@ def check_files(folder, tagname, limit=999):
         if c > limit:
             break
         fpath = os.path.join(folder, fname)
-        check_file(fpath, tagname)
+        if os.path.isfile(fpath):
+            check_file(fpath, tagname)
 
     
 def check_file(fpath, tagname):

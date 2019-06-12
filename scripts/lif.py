@@ -102,6 +102,12 @@ class LIF(LappsObject):
         view_ids = [view.id for view in self.views]
         return "<LIF with views %s>" % ':'.join(view_ids)
 
+    def get_view(self, identifier):
+        for view in self.views:
+            if view.id == identifier:
+                return view
+        return None
+
     def as_json(self):
         d = {"@context": self.context,
              "metadata": self.metadata,
