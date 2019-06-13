@@ -218,7 +218,8 @@ class Document(object):
         for annotation in view.annotations:
             if annotation.type.endswith('GenericRelation'):
                 relation = Relation(self, idx, annotation)
-                self.index.relations.append(relation)
+                if relation.is_acceptable():
+                    self.index.relations.append(relation)
 
     def get_sections(self):
         view = self.get_view("structure")
@@ -260,6 +261,39 @@ class Relation(object):
     def __str__(self):
         return "<Relation %d-%d %s>" \
             % (self.start, self.end, self.pred_text.replace("\n", ' '))
+
+    def is_acceptable(self):
+        return self.predicate_is_event() and self.arguments_contain_entity()
+
+    def predicate_is_event(self):
+        offsets = list(range(self.pred.start, self.pred.end))
+        for offset in offsets:
+            if offset in self.document.index.idx_events:
+                last = self.document.index.idx_events[offset][0] - 1
+                if last in offsets:
+                    return True
+        return False
+
+    def arguments_contain_entity(self):
+        offsets_a1 = list(range(self.arg1.start, self.arg1.end))
+        offsets_a2 = list(range(self.arg2.start, self.arg2.end))
+        index = self.document.index
+        return (self.offsets_contain_idx_element(offsets_a1, index.idx_technologies)
+                or self.offsets_contain_idx_element(offsets_a1, index.idx_persons)
+                or self.offsets_contain_idx_element(offsets_a1, index.idx_organizations)
+                or self.offsets_contain_idx_element(offsets_a1, index.idx_locations)
+                or self.offsets_contain_idx_element(offsets_a2, index.idx_technologies)
+                or self.offsets_contain_idx_element(offsets_a2, index.idx_persons)
+                or self.offsets_contain_idx_element(offsets_a2, index.idx_organizations)
+                or self.offsets_contain_idx_element(offsets_a2, index.idx_locations))
+
+    def offsets_contain_idx_element(self, offsets, idx):
+        for offset in offsets:
+            if offset in idx:
+                last = idx[offset][0] - 1
+                if last in offsets:
+                    return True
+        return False
 
 
 class DocumentElement(object):
