@@ -5,9 +5,9 @@ into ElasticSearch.
 
 Usage:
 
-$ python create_index_docs.py LIF NER TEX TTK REL ELA SAMPLE_FILE?
+$ python create_index_docs.py LIF NER TEX TTK REL TOP ELA SAMPLE_FILE?
 
-The first five arguments are all the input directories with the following
+The first six arguments are all the input directories with the following
 content:
 
 LIF - The LIF files created from the output of Science Parse
@@ -15,6 +15,7 @@ NER - Result of adding named entities to LIF
 TEX - Result of adding technologies to LIF
 TTK - Result of adding Tarsqi analysis to LIF
 REL - Result of adding ReVerb analysis to LIF
+TOP - Result of adding ReVerb analysis to LIF
 
 The ELA argument refers to the output directory.
 
@@ -58,7 +59,7 @@ def get_files(fnames, directory, extension):
     return files
 
 
-def print_files(fnames, lif_files, ner_files, tex_files, ttk_files, rel_files):
+def print_files(fnames, lif_files, ner_files, tex_files, ttk_files, rel_files, top_files):
     for fname in sorted(fnames):
         print("\n%s" % fname)
         print('   lif: %s' % lif_files.get(fname))
@@ -66,16 +67,17 @@ def print_files(fnames, lif_files, ner_files, tex_files, ttk_files, rel_files):
         print('   tex: %s' % tex_files.get(fname))
         print('   ttk: %s' % ttk_files.get(fname))
         print('   rel: %s' % rel_files.get(fname))
+        print('   top: %s' % top_files.get(fname))
 
 
 def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
-                     rel_files, ela):
+                     rel_files, top_files, ela):
     for fname in sorted(fnames):
         Section.ID = 0
         Sentence.ID = 0
         doc = Document(fname,
-                       lif_files[fname], ner_files[fname],
-                       tex_files[fname], ttk_files[fname], rel_files[fname])
+                       lif_files[fname], ner_files[fname], tex_files[fname],
+                       ttk_files[fname], rel_files[fname], top_files[fname])
         doc.collect_annotations()
         print
         doc.pp()
@@ -83,7 +85,8 @@ def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
         json = doc.write(outfile)
         create_sections(doc)
         create_sentences(doc)
-        #break
+        if doc.fname.startswith('8'):
+            break
 
 
 def create_sections(doc):
@@ -104,7 +107,9 @@ class Document(object):
 
     ID = 0
 
-    def __init__(self, fname, lif_file, ner_file, tex_file, ttk_file, rel_file):
+    def __init__(self,
+                 fname, lif_file, ner_file, tex_file,
+                 ttk_file, rel_file, top_file):
         Document.ID += 1
         self.id = Document.ID
         self.fname = fname
@@ -115,11 +120,13 @@ class Document(object):
         self.tex = Container(tex_file).payload
         self.ttk = LIF(ttk_file)
         self.rel = Container(rel_file).payload
+        self.top = LIF(top_file)
         # the view we look for is always the second one
         self._add_view("ner", self.ner.views[1])
         self._add_view("tex", self.tex.views[1])
         self._add_view("ttk", self.ttk.views[1])
         self._add_view("rel", self.rel.views[1])
+        self._add_view("top", self.top.views[0])
         self.index = IndexData(fname, self.id)
         self.index.text = self.lif.text.value
         self.lif.metadata["filename"] = self.fname
@@ -129,10 +136,7 @@ class Document(object):
         self.lif.views.append(view)
 
     def get_view(self, identifier):
-        for view in self.lif.views:
-            if view.id == identifier:
-                return view
-        return None
+        return self.lif.get_view(identifier)
 
     def get_text(self, annotation):
         return self.lif.text.value[annotation.start:annotation.end]
@@ -147,14 +151,24 @@ class Document(object):
 
     def collect_annotations(self):
         self._collect_authors()
+        self._collect_topics()
         self._collect_technologies()
         self._collect_entities()
         self._collect_events()
+        self.index.index()
         self._collect_relations()
-        
+
     def _collect_authors(self):
         authors = [author['name'] for author in self.lif.metadata['authors']]
         self.index.authors = authors
+
+    def _collect_topics(self):
+        view = self.get_view("top")
+        topics = []
+        for annotation in view.annotations:
+             if annotation.type.endswith('SemanticTag'):
+                 topics.append(annotation.features['topic_name'])
+        self.index.topics = topics
 
     def _collect_entities(self):
         view = self.get_view("ner")
@@ -187,18 +201,24 @@ class Document(object):
     def _collect_events(self):
         view = self.get_view("ttk")
         events = set()
+        times = set()
         for annotation in view.annotations:
             if annotation.type.endswith("Event"):
                 annotation.text = self.get_text(annotation)
                 events.add(annotation)
+            elif annotation.type.endswith("TimeExpression"):
+                annotation.text = self.get_text(annotation)
+                times.add(annotation)
         self.index.events = sorted(list(events))
+        self.index.times = sorted(list(times))
 
     def _collect_relations(self):
         view = self.get_view("rel")
         idx = { anno.id: anno for anno in view.annotations if anno.type.endswith('Markable') }
         for annotation in view.annotations:
             if annotation.type.endswith('GenericRelation'):
-                self.index.relations.append(Relation(self, idx, annotation))
+                relation = Relation(self, idx, annotation)
+                self.index.relations.append(relation)
 
     def get_sections(self):
         view = self.get_view("structure")
@@ -223,19 +243,23 @@ class Document(object):
 class Relation(object):
 
     def __init__(self, document, idx, annotation):
-        pred = annotation.features['relation']
-        arg1, arg2 = annotation.features['arguments']
-        self.pred = document.get_text_rel(idx[pred])
-        self.arg1 = document.get_text_rel(idx[arg1])
-        self.arg2 = document.get_text_rel(idx[arg2])
-        self.start = idx[pred].start
-        self.end = idx[pred].end
-        for arg in idx[arg1], idx[arg2]:
+        self.document = document
+        self.annotation = annotation
+        self.pred = idx[annotation.features['relation']]
+        self.arg1 = idx[annotation.features['arguments'][0]]
+        self.arg2 = idx[annotation.features['arguments'][1]]
+        self.pred_text = document.get_text_rel(self.pred)
+        self.arg1_text = document.get_text_rel(self.arg1)
+        self.arg2_text = document.get_text_rel(self.arg2)
+        self.start = self.pred.start
+        self.end = self.pred.end
+        for arg in self.arg1, self.arg2:
             self.start = min(self.start, arg.start)
             self.end = max(self.start, arg.end)
 
     def __str__(self):
-        return "<Relation %d-%d %s>" % (self.start, self.end, self.pred.replace("\n", ' '))
+        return "<Relation %d-%d %s>" \
+            % (self.start, self.end, self.pred_text.replace("\n", ' '))
 
 
 class DocumentElement(object):
@@ -249,6 +273,7 @@ class DocumentElement(object):
         self.index.locations = self.filter(self.document.index.locations)
         self.index.organizations = self.filter(self.document.index.organizations)
         self.index.events = self.filter(self.document.index.events)
+        self.index.times = self.filter(self.document.index.times)
         self.index.relations = self.filter(self.document.index.relations)
 
     def filter(self, annotations):
@@ -318,22 +343,33 @@ class IndexData(object):
         if sentid is not None:
             self.docid = "%04d-%04d" % (docid, sentid)
         self.authors = []
+        self.topics = []
         self.text = None
         self.technologies = []
         self.persons = []
         self.organizations = []
         self.locations = []
         self.events = []
+        self.times = []
         self.relations = []
 
     def __str__(self):
         return "<Index %s %s>" % (self.docid, self.count_string())
 
+    def index(self):
+        self.idx_events = {}
+        for event in self.events:
+            self.idx_events[event.start] = (event.end, event.id)
+        self.idx_technologies = { t.start: (t.end, t.id) for t in self.technologies }
+        self.idx_persons = { t.start: (t.end, t.id) for t in self.persons }
+        self.idx_locations = { t.start: (t.end, t.id) for t in self.locations }
+        self.idx_organizations = { t.start: (t.end, t.id) for t in self.organizations }
+
     def count_string(self):
-        return "auth:%d tech:%d person:%d loc:%d org:%d event:%d rel:%d" \
+        return "auth:%d tech:%d person:%d loc:%d org:%d event:%d time:%d rel:%d top:%d" \
             % (len(self.authors), len(self.technologies), len(self.persons),
                len(self.locations), len(self.organizations), len(self.events),
-               len(self.relations))
+               len(self.times), len(self.relations), len(self.topics))
 
     def write(self, fname):
         json_object = {
@@ -341,14 +377,21 @@ class IndexData(object):
             "docid": self.docid,
             "docname": self.fname,
             "author": self.authors,
+            "topic": self.topics,
             "technology": [t.text for t in self.technologies],
             "person": [p.text for p in self.persons],
             "location": [l.text for l in self.locations],
             "organization": [o.text for o in self.organizations],
             "event": [e.text for e in self.events],
-            "relation": [{"pred": r.pred, "arg1": r.arg1, "arg2": r.arg2} for r in self.relations] }
+            "time": [t.text for t in self.times],
+            "relation": [self.relation_dict(r) for r in self.relations] }
         with codecs.open(fname, 'w', encoding='utf8') as fh:
             fh.write(json.dumps(json_object, sort_keys=True, indent=4))
+
+    def relation_dict(self, relation):
+        return { "pred": relation.pred_text,
+                 "arg1": relation.arg1_text,
+                 "arg2": relation.arg2_text }
 
     def pp(self, indent=''):
         print "%s%s\n" % (indent, self)
@@ -356,8 +399,8 @@ class IndexData(object):
 
 if __name__ == '__main__':
 
-    lif, ner, tex, ttk, rel, ela = sys.argv[1:7]
-    sample = None if len(sys.argv) < 8 else sys.argv[7]
+    lif, ner, tex, ttk, rel, top, ela = sys.argv[1:8]
+    sample = None if len(sys.argv) < 9 else sys.argv[8]
 
     fnames = read_sample(sample, lif)
     lif_files = get_files(fnames, lif, '.lif')
@@ -365,5 +408,6 @@ if __name__ == '__main__':
     tex_files = get_files(fnames, tex, '.lif')
     ttk_files = get_files(fnames, ttk, '.lif')
     rel_files = get_files(fnames, rel, '.lif')
-    #print_files(fnames, lif_files, ner_files, tex_files, ttk_files, rel_files)
-    create_documents(fnames, lif_files, ner_files, tex_files, ttk_files, rel_files, ela)
+    top_files = get_files(fnames, top, '.lif')
+    #print_files(fnames, lif_files, ner_files, tex_files, ttk_files, rel_files, top_files)
+    create_documents(fnames, lif_files, ner_files, tex_files, ttk_files, rel_files, top_files, ela)

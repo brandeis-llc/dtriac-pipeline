@@ -18,11 +18,6 @@ import json
 from elastic import Index
 
 
-# some default values for experimentation
-INDEX_NAME = 'demo'
-SOURCES = '/Users/marc/Desktop/projects/dtra/dtra-534/spv1-results-ela'
-
-
 def read_documents(document_directory):
     documents = []
     for fname in sorted(os.listdir(document_directory)):
@@ -35,11 +30,12 @@ def read_documents(document_directory):
 
 if __name__ == '__main__':
 
-    index_name = INDEX_NAME
-    source_directory = SOURCES
     if len(sys.argv) > 2:
         index_name = sys.argv[1]
         source_directory = sys.argv[2]
+    else:
+        exit('ERROR: missing arguments\nUsage: python load_index.py INDEX_NAME DIRECTORY\n')
+
     docs = read_documents(source_directory)
     idx = Index(index_name)
     idx.load(docs)
