@@ -74,8 +74,8 @@ class Container(LappsObject):
         if self.json_object is not None:
             self.discriminator = self.json_object['discriminator']
             self.payload = LIF(json_object=self.json_object['payload'])
-            #print self.payload.metadata['authors']
-            #print self.json_object['payload'].keys()
+            # print self.payload.metadata['authors']
+            # print self.json_object['payload'].keys()
             self.parameters = self.json_object.get('parameters', {})
 
     def as_json(self):
@@ -226,6 +226,7 @@ class Annotation(object):
         self.type = json_obj['@type']
         self.start = json_obj.get("start")
         self.end = json_obj.get("end")
+        self.target = json_obj.get("target")
         self.text = None
         self.features = {}
         for feat, val in json_obj.get("features", {}).items():
@@ -238,8 +239,10 @@ class Annotation(object):
         d = {"id": self.id, "@type": self.type, "features": self.features}
         if self.start is not None:
             d["start"] = self.start
-        if self.start is not None:
+        if self.end is not None:
             d["end"] = self.end
+        if self.target is not None:
+            d["target"] = self.target
         return d
 
 
