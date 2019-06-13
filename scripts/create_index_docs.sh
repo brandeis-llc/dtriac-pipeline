@@ -9,8 +9,10 @@ ner=$repo/samples/small-25-ner
 tex=$repo/samples/small-25-tex
 ttk=$repo/samples/small-25-ttk
 rel=$repo/samples/small-25-rel
+top=$repo/samples/small-25-top
 
-ela=$repo/samples/small-25-ela
-#ela=$repo/samples/tmp
+#ela=$repo/samples/small-25-ela
+ela=$repo/samples/tmp
+rm $ela/*/*
 
-python create_index_docs.py $lif $ner $tex $ttk $rel $ela $sample
+python create_index_docs.py $lif $ner $tex $ttk $rel $top $ela $sample
