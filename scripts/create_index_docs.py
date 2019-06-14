@@ -85,7 +85,7 @@ def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
         json = doc.write(outfile)
         create_sections(doc)
         create_sentences(doc)
-        if doc.fname.startswith('8'):
+        if doc.fname.startswith('888'):
             break
 
 
