@@ -1,0 +1,29 @@
+<!doctype html>
+<head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<title>Test Result</title>
+
+<h1>Test Result</h1>
+
+
+{% if result %}
+
+<p>Hits: {{ result.sources.__len__() }}<p/>
+  
+<table cellpadding=5 cellspacing=0 border=1>
+
+  {% for source in result.sources %}
+
+  <tr><td><span class=fname>{{ source.docname }}</span><br/>{{ source.text }}</td></tr>
+
+  {% endfor %}
+
+</table>
+
+{% else %}
+
+<h1>Hello World!</h1>
+
+{% endif %}

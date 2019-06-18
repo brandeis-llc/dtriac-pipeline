@@ -1,0 +1,73 @@
+<!doctype html>
+<head>
+  <title>Document</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+</head>
+
+
+{% if source.title %}
+<h3 class="title">{{source.title}}</h3>
+{% else %}
+<h3 class="title">{{source.docname}}</h3>
+{% endif %}
+
+{% if docid and source %}
+
+<div class="authors padded">
+  {{ ', '.join(source.author) }}
+</div>
+
+<p/>
+
+<div class="topics padded">
+  {% for topic in source.topic %}
+  {{topic}}<br/>
+  {% endfor %}
+  {{ ', '.join(source.author) }}
+</div>
+
+<p/>
+
+<div class="entities padded">
+  <table spacing=0 padding=5 border=0>
+    <tr valign="top">
+      <td>technologies</td>
+      <td>&nbsp;&nbsp;</td>
+      <td>{{ ', '.join(source.technology) }}</td>
+    </tr>
+    <tr valign="top">
+      <td>people</td>
+      <td>&nbsp;</td>
+      <td>{{ ', '.join(source.person) }}</td>
+    </tr>
+    <tr valign="top">
+      <td>locations</td>
+      <td>&nbsp;</td>
+      <td>{{ ', '.join(source.location) }}</td>
+    </tr>
+    <tr valign="top">
+      <td>organizations</td>
+      <td>&nbsp;</td>
+      <td>{{ ', '.join(source.organization) }}</td>
+    </tr>
+  </table>
+</div>
+
+<p/>
+
+{% if source.abstract %}
+<div class="text padded">
+  {{ source.abstract }}
+</div>
+<p/>
+{% endif %}
+
+{% if show_text %}
+<div class="text padded">
+{% for para in source.text.split('\n\n') %}
+<p>{{ para }}</p>
+{% endfor %}
+</div>
+{% endif %}
+
+{% endif %}

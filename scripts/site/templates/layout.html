@@ -1,0 +1,22 @@
+<!doctype html>
+<head>
+  {% block head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  {% endblock %}
+</head>
+
+<body>
+
+  {% block navigation %}
+  [ <a href="/">Home</a> | <a href="/search">Search</a> ]
+  {% endblock %}
+  
+  {% block header %}
+  {% endblock %}
+
+  {% block content %}
+  {% endblock %}
+
+</body>
+</html>
+
