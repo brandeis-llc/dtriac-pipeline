@@ -20,13 +20,13 @@
 {% if docid and source %}
 
 <div class="authors padded">
-  {{ ', '.join(source.author) }}
+  {{ ', '.join(source.source.author) }}
 </div>
 
 <p/>
 
 <div class="topics padded">
-  {% for topic in source.topic %}
+  {% for topic in source.source.topic %}
   {{topic}}<br/>
   {% endfor %}
 </div>
@@ -38,22 +38,38 @@
     <tr valign="top">
       <td>technologies</td>
       <td>&nbsp;&nbsp;</td>
-      <td>{{ ', '.join(source.technology) }}</td>
+      <td>
+	{% for tech in source.technologies() %}
+	<a href="/search?search=true&query=technology:{{tech}}">{{tech}}</a>,
+	{% endfor %}
+      </td>
     </tr>
     <tr valign="top">
       <td>people</td>
       <td>&nbsp;</td>
-      <td>{{ ', '.join(source.person) }}</td>
+      <td>
+	{% for person in source.persons() %}
+	<a href="/search?search=true&query=person:{{person}}">{{person}}</a>,
+	{% endfor %}
+      </td>
     </tr>
     <tr valign="top">
       <td>locations</td>
       <td>&nbsp;</td>
-      <td>{{ ', '.join(source.location) }}</td>
+      <td>
+	{% for loc in source.locations() %}
+	<a href="/search?search=true&query=location:{{loc}}">{{loc}}</a>,
+	{% endfor %}
+      </td>
     </tr>
     <tr valign="top">
       <td>organizations</td>
       <td>&nbsp;</td>
-      <td>{{ ', '.join(source.organization) }}</td>
+      <td>
+	{% for org in source.organizations() %}
+	<a href="/search?search=true&query=organization:{{org}}">{{org}}</a>,
+	{% endfor %}
+      </td>
     </tr>
   </table>
 </div>

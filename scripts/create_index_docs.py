@@ -91,7 +91,6 @@ def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
                        lif_files[fname], ner_files[fname], tex_files[fname],
                        ttk_files[fname], sen_files[fname], rel_files[fname],
                        vnc_files[fname], top_files[fname])
-        doc.collect_annotations()
         doc.pp(prefix='\n')
         doc.write(os.path.join(ela, 'documents'))
         #create_sections(doc)
@@ -118,58 +117,57 @@ class Document(object):
 
     ID = 0
 
+    @classmethod
+    def new_id(cls):
+        cls.ID += 1
+        return cls.ID
+
     def __init__(self,
                  fname, lif_file, ner_file, tex_file,
                  ttk_file, sen_file, rel_file, vnc_file, top_file):
-        Document.ID += 1
-        self.id = Document.ID
+        """Build a single LIF object with all relevant annotations. The annotations
+        themselves are stored in the Annotations object in self.annotations."""
+        self.id = Document.new_id()
         self.fname = fname
-        # Note that some files contain LIF objects and others contain Containers
-        # with LIF embedded
         self.lif = Container(lif_file).payload
-        self.ner = Container(ner_file).payload
-        self.tex = Container(tex_file).payload
-        self.ttk = LIF(ttk_file)
-        self.sen = LIF(sen_file)
-        self.rel = Container(rel_file).payload
-        self.vnc = LIF(vnc_file)
-        self.top = LIF(top_file)
-        # the view we look for is the first or second, depending on how the
-        # processor was set up
-        self._add_view("ner", self.ner.views[1])
-        self._add_view("tex", self.tex.views[1])
-        self._add_view("ttk", self.ttk.views[1])
-        self._add_view("sen", self.sen.views[0])
-        self._add_view("rel", self.rel.views[1])
-        self._add_view("vnc", self.vnc.views[0])
-        self._add_view("top", self.top.views[0])
+        self._add_views(ner_file, tex_file, ttk_file, sen_file, rel_file, vnc_file, top_file)
+        self.lif.metadata["filename"] = self.fname
+        self.lif.metadata["title"] = self._get_title()
+        self.lif.metadata["abstract"] = self._get_abstract()
         self.annotations = Annotations(fname, docid=self.id, text=self.lif.text.value)
         self.annotations.text = self.lif.text.value
-        self.lif.metadata["filename"] = self.fname
-        self._set_title()
-        self._set_abstract()
+        self._collect_annotations()
+
+    def _add_views(self, ner_file, tex_file, ttk_file, sen_file, rel_file,
+                   vnc_file, top_file):
+        # Note that some files contain LIF objects and others contain Containers
+        # with LIF embedded. The view we are looking for is the first or second,
+        # depending on how the processor for those data was set up.
+        self._add_view("ner", Container(ner_file).payload.views[1])
+        self._add_view("tex", Container(tex_file).payload.views[1])
+        self._add_view("ttk", LIF(ttk_file).views[1])
+        self._add_view("sen", LIF(sen_file).views[0])
+        self._add_view("rel", Container(rel_file).payload.views[1])
+        self._add_view("vnc", LIF(vnc_file).views[0])
+        self._add_view("top", LIF(top_file).views[0])
 
     def _add_view(self, identifier, view):
         view.id = identifier
         self.lif.views.append(view)
 
-    def _set_title(self):
-        self.title = None
+    def _get_title(self):
         view = self.get_view("structure")
         text = self.lif.text.value
         for annotation in view.annotations:
             if annotation.type.endswith('Title'):
-                self.title = text[annotation.start:annotation.end]
-                break
+                return text[annotation.start:annotation.end]
 
-    def _set_abstract(self):
-        self.abstract = None
+    def _get_abstract(self):
         view = self.get_view("structure")
         text = self.lif.text.value
         for annotation in view.annotations:
             if annotation.type.endswith('Abstract'):
-                self.abstract = text[annotation.start:annotation.end]
-                break
+                return text[annotation.start:annotation.end]
 
     def get_view(self, identifier):
         return self.lif.get_view(identifier)
@@ -177,15 +175,7 @@ class Document(object):
     def get_text(self, annotation):
         return self.lif.text.value[annotation.start:annotation.end]
 
-    def get_text_ner(self, annotation):
-        # exists for now since the primary data are out of sync
-        return self.ner.text.value[annotation.start:annotation.end]
-
-    def get_text_rel(self, annotation):
-        # exists for now since the primary data are out of sync
-        return self.rel.text.value[annotation.start:annotation.end]
-
-    def collect_annotations(self):
+    def _collect_annotations(self):
         self._collect_authors()
         self._collect_topics()
         self._collect_technologies()
@@ -211,7 +201,7 @@ class Document(object):
     def _collect_entities(self):
         view = self.get_view("ner")
         for entity in view.annotations:
-            entity.text = self.get_text_ner(entity)
+            entity.text = self.get_text(entity)
             category = entity.features.get('category')
             if category == 'person':
                 self.annotations.persons.add(entity)
@@ -278,7 +268,7 @@ class Document(object):
 
     def write(self, dirname):
         self.annotations.write(os.path.join(dirname, "%04d.json" % self.id),
-                               self.title, self.abstract)
+                               self.lif.metadata["title"], self.lif.metadata["abstract"])
         self.annotations.write_index(os.path.join(dirname, "%04d.pckl" % self.id))
 
     def pp(self, prefix=''):
@@ -296,9 +286,9 @@ class Relation(object):
         self.pred = idx[annotation.features['relation']]
         self.arg1 = idx[annotation.features['arguments'][0]]
         self.arg2 = idx[annotation.features['arguments'][1]]
-        self.pred_text = document.get_text_rel(self.pred)
-        self.arg1_text = document.get_text_rel(self.arg1)
-        self.arg2_text = document.get_text_rel(self.arg2)
+        self.pred_text = document.get_text(self.pred)
+        self.arg1_text = document.get_text(self.arg1)
+        self.arg2_text = document.get_text(self.arg2)
         self.start = self.pred.start
         self.end = self.pred.end
         for arg in self.arg1, self.arg2:

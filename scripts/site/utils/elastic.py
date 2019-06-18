@@ -39,7 +39,7 @@ class Index(object):
 class Result(object):
 
     """Class to wrap an ElasticSearch result."""
-    
+
     def __init__(self, result):
         self.result = result
         self.hits = [Hit(hit) for hit in self.result['hits']['hits']]
@@ -71,6 +71,32 @@ class Hit(object):
         self.hit = hit
         self.id = hit['_id']
         self.score = hit['_score']
-        self.source = hit['_source']
-        self.docid = self.source.get('docid')
-        self.docname = self.source.get('docname')
+        self.source = Source(hit['_source'])
+        self.docid = self.source.source.get('docid')
+        self.docname = self.source.source.get('docname')
+
+
+class Source(object):
+
+    def __init__(self, source):
+        self.source = source
+        self.docid = source.get('docid')
+        self.docname = source.get('docname')
+        self.abstract = source.get('abstract')
+        self.text = source.get('text')
+
+    def technologies(self):
+        return self.source.get('technology', [])
+
+    def persons(self):
+        return self.source.get('person', [])
+
+    def locations(self):
+        return self.source.get('location', [])
+
+    def organizations(self):
+        return self.source.get('organization', [])
+
+    def technology_links(self):
+        return ['<a href="/search?search=true&query=%s">%s</a>' % (tech, tech)
+                for tech in self.technologies()]

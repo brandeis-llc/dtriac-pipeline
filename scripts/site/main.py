@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request
 from pprint import pformat
 
-from utils.elastic import Index
+from utils.elastic import Index, Source
 from utils.query import query
 from utils.misc import get_var
 
@@ -48,7 +48,7 @@ def doc():
     show_text = get_var(request, "show_text")
     docid = sentid.split('-')[0]
     doc = INDEX_DOC.get(docid)
-    source = doc['_source']
+    source = Source(doc['_source'])
     return render_template('doc.html', docid=docid, source=source,
                            index=LOCAL_INDEX, show_text=show_text)
     return "%s\n<pre>%s</pre>" % (docid, pformat(doc))
