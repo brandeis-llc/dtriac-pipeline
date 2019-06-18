@@ -82,6 +82,7 @@ class Source(object):
         self.source = source
         self.docid = source.get('docid')
         self.docname = source.get('docname')
+        self.year = source.get('year')
         self.abstract = source.get('abstract')
         self.text = source.get('text')
 

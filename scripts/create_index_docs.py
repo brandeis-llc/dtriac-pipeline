@@ -32,6 +32,7 @@ import sys
 import codecs
 import json
 import pickle
+import datetime
 from pprint import pformat
 from collections import Counter
 
@@ -95,7 +96,7 @@ def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
         doc.write(os.path.join(ela, 'documents'))
         #create_sections(doc)
         #create_sentences(doc)
-        if doc.fname.startswith('8'):
+        if doc.fname.startswith('88'):
             break
 
 
@@ -130,12 +131,16 @@ class Document(object):
         self.id = Document.new_id()
         self.fname = fname
         self.lif = Container(lif_file).payload
-        self._add_views(ner_file, tex_file, ttk_file, sen_file, rel_file, vnc_file, top_file)
+        self._add_views(ner_file, tex_file, ttk_file, sen_file, rel_file,
+                        vnc_file, top_file)
         self.lif.metadata["filename"] = self.fname
         self.lif.metadata["title"] = self._get_title()
+        self.lif.metadata["year"] = self._get_year()
         self.lif.metadata["abstract"] = self._get_abstract()
-        self.annotations = Annotations(fname, docid=self.id, text=self.lif.text.value)
+        self.annotations = Annotations(fname, doc=self, docid=self.id,
+                                       text=self.lif.text.value)
         self.annotations.text = self.lif.text.value
+        self._collect_allowed_offsets()
         self._collect_annotations()
 
     def _add_views(self, ner_file, tex_file, ttk_file, sen_file, rel_file,
@@ -148,7 +153,12 @@ class Document(object):
         self._add_view("ttk", LIF(ttk_file).views[1])
         self._add_view("sen", LIF(sen_file).views[0])
         self._add_view("rel", Container(rel_file).payload.views[1])
-        self._add_view("vnc", LIF(vnc_file).views[0])
+        try:
+            self._add_view("vnc", LIF(vnc_file).views[0])
+        except ValueError:
+            # for the cases where the VNC component fails
+            print "WARNING: no json object"
+            print "         %s" % os.path.basename(vnc_file)
         self._add_view("top", LIF(top_file).views[0])
 
     def _add_view(self, identifier, view):
@@ -161,6 +171,19 @@ class Document(object):
         for annotation in view.annotations:
             if annotation.type.endswith('Title'):
                 return text[annotation.start:annotation.end]
+
+    def _get_year(self):
+        year = self.lif.metadata.get('year')
+        if year is not None:
+            return year
+        else:
+            # not all files have the year in the metadata, fake it with some
+            # analyses of the references
+            year = 0
+            current_year = datetime.datetime.now().year
+            for ref in self.lif.metadata.get('references', []):
+                year = max(year, min(current_year, ref.get('year', 0)))
+            return year if year > 0 else None
 
     def _get_abstract(self):
         view = self.get_view("structure")
@@ -175,9 +198,20 @@ class Document(object):
     def get_text(self, annotation):
         return self.lif.text.value[annotation.start:annotation.end]
 
+    def _collect_allowed_offsets(self):
+        """This creates a set of all character offsets that are in indexable areas of
+        the document, that is, they are in sentences of type=normal."""
+        view = self.get_view("sen")
+        self.allowed_offsets = set()
+        for s in view.annotations:
+            if s.features.get('type') == 'normal':
+                for p in range(s.start, s.end):
+                    self.allowed_offsets.add(p)
+
     def _collect_annotations(self):
         self._collect_authors()
         self._collect_topics()
+        self._collect_sentences()
         self._collect_technologies()
         self._collect_entities()
         self._collect_events()
@@ -192,11 +226,18 @@ class Document(object):
     def _collect_topics(self):
         """Collect the topics and put them on a list in the index."""
         view = self.get_view("top")
-        topics = []
         for annotation in view.annotations:
              if annotation.type.endswith('SemanticTag'):
-                 topics.append(annotation.features['topic_name'])
-        self.annotations.topics = topics
+                 topic_name = annotation.features['topic_name']
+                 self.annotations.topics.append(topic_name)
+                 for topic_element in topic_name.split():
+                     self.annotations.topic_elements.append(topic_element)
+
+    def _collect_sentences(self):
+        view = self.get_view("sen")
+        for s in view.annotations:
+            if s.features.get('type') == 'normal':
+                self.annotations.sentences.append(s)
 
     def _collect_entities(self):
         view = self.get_view("ner")
@@ -234,6 +275,8 @@ class Document(object):
 
     def _collect_verbnet_classes(self):
         view = self.get_view("vnc")
+        if view is None:
+            return
         for annotation in view.annotations:
             if annotation.features.get('tags') == [u'None']:
                 continue
@@ -264,11 +307,14 @@ class Document(object):
         # view, but with the type (normal vs crap) added
         view = self.get_view("sen")
         sentences = [a for a in view.annotations if a.type.endswith('Sentence')]
-        return [Sentence(self, s) for s in sentences if s.features.get('type') == 'normal']
+        return [Sentence(self, s) for s in sentences
+                if s.features.get('type') == 'normal']
 
     def write(self, dirname):
         self.annotations.write(os.path.join(dirname, "%04d.json" % self.id),
-                               self.lif.metadata["title"], self.lif.metadata["abstract"])
+                               self.lif.metadata["title"],
+                               self.lif.metadata["year"],
+                               self.lif.metadata["abstract"])
         self.annotations.write_index(os.path.join(dirname, "%04d.pckl" % self.id))
 
     def pp(self, prefix=''):
@@ -422,22 +468,26 @@ class Annotations(object):
     associated with text positions, and (3) relations, which currently have a
     special status in that they are the only complex annotation."""
 
-    def __init__(self, fname, docid=None, sentid=None, text=None):
+    def __init__(self, fname, doc=None, docid=None, sentid=None, text=None):
         self.fname = fname
+        self.doc = doc
         self.docid = "%04d" % docid
         if sentid is not None:
             self.docid = "%04d-%04d" % (docid, sentid)
         self.text = text
         self.authors = []
+        self.year = None
         self.topics = []
+        self.topic_elements = []
+        self.sentences = []
         self.text = None
-        self.technologies = IndexedAnnotations("technologies")
-        self.persons = IndexedAnnotations("persons")
-        self.organizations = IndexedAnnotations("organizations")
-        self.locations = IndexedAnnotations("locations")
-        self.events = IndexedAnnotations("events")
-        self.times = IndexedAnnotations("times")
-        self.vnc = IndexedAnnotations("vnc")
+        self.technologies = IndexedAnnotations(doc, "technologies")
+        self.persons = IndexedAnnotations(doc, "persons")
+        self.organizations = IndexedAnnotations(doc, "organizations")
+        self.locations = IndexedAnnotations(doc, "locations")
+        self.events = IndexedAnnotations(doc, "events")
+        self.times = IndexedAnnotations(doc, "times")
+        self.vnc = IndexedAnnotations(doc, "vnc")
         self.relations = []
 
     def __str__(self):
@@ -449,15 +499,17 @@ class Annotations(object):
                len(self.organizations), len(self.events), len(self.times),
                len(self.relations), len(self.topics))
 
-    def write(self, fname, title=None, abstract=None):
+    def write(self, fname, title=None, year=None, abstract=None):
         """Writes the document with the search fields to a json file."""
         json_object = {
             "text": self.text,
             "docid": self.docid,
             "docname": self.fname,
             "title": title,
+            "year": year,
             "author": self.authors,
             "topic": self.topics,
+            "topic_element": self.topic_elements,
             "abstract": abstract,
             "technology": self.technologies.get_text_strings(),
             "person": self.persons.get_text_strings(),
@@ -494,6 +546,7 @@ class Annotations(object):
 
     def relation_dict(self, relation):
         return { "pred": relation.pred_text,
+                 "vnc": relation.vnc,
                  "arg1": relation.arg1_text,
                  "arg2": relation.arg2_text }
 
@@ -507,7 +560,8 @@ class IndexedAnnotations(object):
     "technology). Keeps the lize, the list of annotations, a set of text strings
     and a couple of dictionaries."""
 
-    def __init__(self, annotation_type):
+    def __init__(self, doc, annotation_type):
+        self.doc = doc
         self.type = annotation_type
         self.size = 0
         self.texts = set()
@@ -534,6 +588,7 @@ class IndexedAnnotations(object):
     def finish(self):
         """Set the size variable and populate the three indexes."""
         self.size = len(self.texts)
+        self._filter_annotations()
         self.idx_p1_p2_id = { a.start: (a.end, a.id) for a in self.annotations }
         for anno in self.annotations:
             self.idx_text_offsets.setdefault(anno.text, []).append("%d-%d" % (anno.start, anno.end))
@@ -555,6 +610,20 @@ class IndexedAnnotations(object):
         print self.type
         for text in sorted(self.idx_text_offsets):
             print "  %s  %s" % (text, self.idx_text_offsets[text])
+
+    def _filter_annotations(self):
+        """Filter the list of annotations to make sure that annotations are allowed only
+        if they fall within sentences with type=normal, also update the texts."""
+        offsets = self.doc.allowed_offsets
+        self.annotations = [anno for anno in self.annotations
+                            if self._offsets_are_allowed(anno)]
+        self.texts = set([a.text for a in self.annotations])
+
+    def _offsets_are_allowed(self, annotation):
+        for p in range(annotation.start, annotation.end):
+            if p not in self.doc.allowed_offsets:
+                return False
+        return True
 
 
 if __name__ == '__main__':

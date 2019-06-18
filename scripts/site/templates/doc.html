@@ -21,6 +21,9 @@
 
 <div class="authors padded">
   {{ ', '.join(source.source.author) }}
+  {% if source.year %}
+  - {{ source.year }}
+  {% endif %}
 </div>
 
 <p/>
