@@ -51,10 +51,10 @@ def get_files(fnames, directory, extension):
 
 def copy_files_to_sample(json_files, target_dir):
     extension = '.pdf.json'
-    print("Copying files to %s" % target_dir)
+    print("Copying files to {}".format(target_dir))
     for json_file in json_files.values():
         target_file = os.path.basename(json_file)[:-len(extension)] + '.json'
-        print("... %s" % target_file)
+        print("... {}".format(target_file))
         target_file = os.path.join(target_dir, target_file)
         shutil.copyfile(json_file, target_file)
 
@@ -68,7 +68,7 @@ def create_lif_files(science_parse_dir, lif_dir, txt_dir, test=False):
 
 
 def create_lif_file(json_file, lif_file, txt_file, test=False):
-    print("Creating %s" % lif_file)
+    print("Creating {}".format(lif_file))
     with codecs.open(json_file, encoding='utf8') as fh_in, \
          codecs.open(lif_file, 'w', encoding='utf8') as fh_out_lif, \
          codecs.open(txt_file, 'w', encoding='utf8') as fh_out_txt:
@@ -147,7 +147,7 @@ def test_lif_file(lif_file):
     view = lif.views[0]
     for anno in view.annotations:
         if anno.type.endswith('Header'):
-            print("[%s]" % text[anno.start:anno.end])
+            print("[{}]".format(text[anno.start:anno.end]))
     print('')
 
 
@@ -158,11 +158,11 @@ class IdentifierFactory(object):
     @classmethod
     def next_id(cls, tagname):
         cls.ids[tagname] += 1
-        return "%s%04d" % (tagname.lower(), cls.ids[tagname])
+        return "{}{:04d}".format(tagname.lower(), cls.ids[tagname])
 
 
 def vocab(annotation_type):
-    return "http://vocab.lappsgrid.org/%s" % annotation_type
+    return "http://vocab.lappsgrid.org/{}".format(annotation_type)
 
         
 if __name__ == '__main__':

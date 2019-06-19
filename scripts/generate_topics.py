@@ -58,7 +58,7 @@ def build_model(lif_dir):
 def _collect_data(lif_dir):
     all_data = []
     for fname in os.listdir(lif_dir):
-        print("  %s" % os.path.basename(fname))
+        print("  {}".format(os.path.basename(fname)))
         fpath = os.path.join(lif_dir, fname)
         lif = Container(fpath).payload
         text_data = prepare_text_for_lda(lif.text.value)
@@ -74,7 +74,7 @@ def _collect_data(lif_dir):
 def print_model():
     lda = load_model()
     topics = lda.print_topics(num_words=5)
-    print('\nTop 20 topics of total %d topics:\n' % len(lda.get_topics()))
+    print('\nTop 20 topics of total {:d} topics:\n'.format(len(lda.get_topics())))
     for topic in topics:
         print('  ', topic)
 
@@ -97,7 +97,7 @@ def generate_topics(lif, top):
     for fname in os.listdir(lif):
 
         topic_id = 0
-        print("\n%s" % os.path.basename(fname))
+        print("\n{}".format(os.path.basename(fname)))
         fname_in = os.path.join(lif, fname)
         fname_out = os.path.join(top, fname)
         lif_in = Container(fname_in).payload
@@ -147,13 +147,13 @@ def markable_annotation(lif_obj):
 
 
 def topic_annotation(topic, topic_id, lemmas):
-    return Annotation({"id": "t%d" % topic_id,
+    return Annotation({"id": "t{:d}".format(topic_id),
                        "@type": 'http://vocab.lappsgrid.org/SemanticTag',
                        "target": "m1",
                        "features": {
                            "type": "gensim-topic",
                            "topic_id": topic[0],
-                           "topic_score": "%.04f" % topic[1],
+                           "topic_score": "{:.04f}".format(topic[1]),
                            "topic_name": lemmas}})
 
 

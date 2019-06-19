@@ -6,6 +6,7 @@ Module with some convenience code for acessing an ELastic Search index.
 
 from pprint import pprint
 from collections import Counter
+import json
 
 from elasticsearch import Elasticsearch 
 from elasticsearch.exceptions import NotFoundError
@@ -26,7 +27,7 @@ class Index(object):
             self.es.index(index=self.index, id=identifier, body=element)
 
     def get(self, message, doc_id, dribble=False):
-        print("\n%s" % message)
+        print("\n{}".format(message))
         try:
             doc = self.es.get(index=self.index, id=doc_id)
             if dribble:
@@ -36,7 +37,7 @@ class Index(object):
             print(e)
 
     def search(self, message, query, dribble=False):
-        print("\n%s" % message)
+        print("\n{}".format(message))
         result = Result(self.es.search(index=self.index, body=query))
         result.print_sources(dribble)
         return result
@@ -53,21 +54,21 @@ class Result(object):
         self.sources = [hit.source for hit in self.hits]
 
     def write(self):
-        fname = "%04d.txt" % nextint()
-        with codecs.open(fname, 'w', encoding='utf8') as fh:
+        fname = "{:04d}.txt".format(nextint())
+        with open(fname, 'w', encoding='utf8') as fh:
             fh.write(json.dumps(self.result, sort_keys=True, indent=4))
 
     def pp(self):
-        print("\n    Number of hits: %d" % self.total_hits)
+        print("\n    Number of hits: {:d}".format(self.total_hits))
         for hit in self.hits:
-            print("    %s  %.4f  %s" % (hit.docid, hit.score, hit.docname[:80]))
+            print("    {}  {:.4f}  {}".format(hit.docid, hit.score, hit.docname[:80]))
 
     def print_sources(self, dribble):
         if dribble:
             sources = self.sources
-            print('   Got %d hits' % self.total_hits)
+            print('   Got {:d} hits'.format(self.total_hits))
             for source in self.sources:
-                print('   %s' % source)
+                print('   {}'.format(source))
 
 
 class Hit(object):
