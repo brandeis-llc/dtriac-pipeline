@@ -25,3 +25,5 @@ td a:active { text-decoration: none; }
 .padded { padding: 8px; }
 
 .bigger { font-size: 22px; }
+
+.example { margin-left: 10px;  background-color: #ffffee; padding: 5px; border: thin dotted lightgray; }

@@ -41,7 +41,7 @@ def docs():
     result = INDEX_DOC.get_documents()
     return render_template('docs.html', sources=result.sources)
 
-    
+
 @app.route("/doc", methods=['GET', 'POST'])
 def doc():
     sentid = get_var(request, "sentid")
@@ -52,3 +52,8 @@ def doc():
     return render_template('doc.html', docid=docid, source=source,
                            index=LOCAL_INDEX, show_text=show_text)
     return "%s\n<pre>%s</pre>" % (docid, pformat(doc))
+
+
+@app.route("/help", methods=['GET'])
+def help():
+    return render_template('help.html')

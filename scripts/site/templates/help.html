@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block head %}
+{{ super() }}
+<title>Help</title>
+{% endblock %}
+
+
+{% block header %}
+<h3 class="title">Help on search</h3>
+{% endblock %}
+
+{% block content %}
+
+You can do a simple search on the text of documents in the index just by typing in a search term:
+
+<pre class="example">
+communication
+</pre>
+
+To search for particular index fields prefix the term with the field and separate field and term by a colon:
+
+<pre class="example">
+technology:communication
+event:assume
+</pre>
+
+Recognized fields are 'technology', 'person', 'location', 'organization' and
+'event'. In addition, relations can be search via complex fields:
+'relation.pred', 'relation.arg1' and 'relation.arg2':
+
+<pre class="example">
+relation.arg1:communication
+</pre>
+
+You can create complex queries:
+
+<pre class="example">
+location:Italy person:markov
+</pre>
+
+This query will be interpreted as an AND query. You canmake this explicit or
+using an OR query by adding AND or OR to the beginning of the query:
+
+<pre class="example">
+AND location:Italy person:markov lives
+OR location:Italy person:markov lives
+</pre>
+
+
+<br/>
+<p><a href="/search">back to search</a></p>
+
+{% endblock %}

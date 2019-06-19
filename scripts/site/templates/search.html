@@ -14,7 +14,10 @@
 
 <form class=searchboxaction="/search" method="post">
   <input type="hidden" name="search" value="true"/>
-  Search: <input type="text" name="query"/> <input type="submit" value="Submit"/>
+  Search:
+  <input type="text" name="query" size="80"/>
+  <input type="submit" value="Submit"/>
+  &nbsp;<a href="/help">help</a>
 <form>
 
 <p/>
@@ -36,13 +39,14 @@
 
 <table cellpadding=5 cellspacing=0 border=1 bordercolor=lightgray>
 
-  {% for source in result.sources %}
+  {% for hit in result.hits %}
 
   <tr>
     <td>
-      <a href=/doc?sentid={{ source.docid }}>{{ source.docid }}</a> -
-      <span class="fname">{{ source.docname }}</span><br/>
-      	{{ source.text }}</td></tr>
+      {{ hit.score }}
+      <a href=/doc?sentid={{ hit.source.docid }}>{{ hit.source.docid }}</a> -
+      <span class="fname">{{ hit.source.docname }}</span><br/>
+      {{ hit.source.text }}</td></tr>
 
   {% endfor %}
 

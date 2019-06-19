@@ -522,8 +522,15 @@ class Annotations(object):
             fh.write(json.dumps(json_object, sort_keys=True, indent=4))
 
     def write_index(self, fname):
-        """Writes the offset and lemma index to a pickle file."""
+        """Writes the text, the offset index and the lemma index to a pickle
+        file. The offsets attribute has, for each category, mappings from the
+        category string to a string that encodes all offsets where the entity
+        occurs. The lemma property maps lemmas to full phrases as they occur in
+        the offsets index."""
+        # TODO: this does not yet include relations
+        # TODO: should include sentence boundaries
         json_object = {
+            "text": self.text,
             "offsets": {
                 "technology": self.technologies.idx_text_offsets,
                 "person": self.persons.idx_text_offsets,
