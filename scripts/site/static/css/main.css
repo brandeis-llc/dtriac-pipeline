@@ -1,0 +1,27 @@
+.title { border-bottom: medium solid darkgreen; padding-bottom: 5px; }
+
+.authors { border: thin solid darkblue; }
+
+.topics { border: thin solid darkred; }
+
+.entities { border: thin solid darkgreen; }
+
+.text { border: thin solid darkgray; }
+
+.fname { color: grey; }
+
+.doclinks { border: thin solid darkgray; }
+
+div.doclinks a:link { text-decoration: none; }
+div.doclinks a:visited { text-decoration: none; }
+div.doclinks a:hover { text-decoration: underline; }
+div.doclinks a:active { text-decoration: none; }
+
+td a:link { text-decoration: none; }
+td a:visited { text-decoration: none; }
+td a:hover { text-decoration: underline; }
+td a:active { text-decoration: none; }
+
+.padded { padding: 8px; }
+
+.bigger { font-size: 22px; }
