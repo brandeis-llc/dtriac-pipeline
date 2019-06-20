@@ -5,17 +5,19 @@ into ElasticSearch.
 
 Usage:
 
-$ python create_index_docs.py LIF NER TEX TTK REL TOP ELA SAMPLE_FILE?
+$ python create_index_docs.py LIF NER TEX TTK SEN REL VNC TOP ELA SAMPLE_FILE?
 
-The first six arguments are all the input directories with the following
+The first eight arguments are all the input directories with the following
 content:
 
 LIF - The LIF files created from the output of Science Parse
 NER - Result of adding named entities to LIF
 TEX - Result of adding technologies to LIF
 TTK - Result of adding Tarsqi analysis to LIF
+SEN - Result of adding sentences types to LIF
 REL - Result of adding ReVerb analysis to LIF
-TOP - Result of adding ReVerb analysis to LIF
+VNC - Result of adding ReVerb analysis to LIF
+TOP - Result of adding verbnet classes to LIF
 
 The ELA argument refers to the output directory.
 
@@ -86,32 +88,21 @@ def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
     """Read all the lif files generate for a document and create JSON files for
     documents, sections and sentences."""
     for fname in sorted(fnames):
-        Section.ID = 0
         Sentence.ID = 0
         doc = Document(fname,
                        lif_files[fname], ner_files[fname], tex_files[fname],
                        ttk_files[fname], sen_files[fname], rel_files[fname],
                        vnc_files[fname], top_files[fname])
-        doc.pp(prefix='\n')
+        doc.pp()
         doc.write(os.path.join(ela, 'documents'))
-        #create_sections(doc)
-        #create_sentences(doc)
+        sentences_dir = os.path.join(ela, 'sentences', "%04d" % doc.id)
+        if not os.path.exists(sentences_dir):
+            os.makedirs(sentences_dir)
+            print("Creating directory %s\n" % sentences_dir)
+        for sentence in doc.get_sentences():
+            sentence.write(sentences_dir)
         if doc.fname.startswith('88'):
             break
-
-
-def create_sections(doc):
-    sections = doc.get_sections()
-    for section in sections:
-        #print section
-        section.write(os.path.join(ela, 'sections'))
-
-
-def create_sentences(doc):
-    sentences = doc.get_sentences()
-    for sentence in sentences:
-        #sentence.pp()
-        sentence.write(os.path.join(ela, 'sentences'))
 
 
 class Document(object):
@@ -297,11 +288,6 @@ class Document(object):
     def _add_verbnet_class(self, relation):
         pass
 
-    def get_sections(self):
-        view = self.get_view("structure")
-        sections = [a for a in view.annotations if a.type.endswith('Section')]
-        return [Section(self, section) for section in sections]
-
     def get_sentences(self):
         # take the sentences view, it has the sentences copied from the ttk
         # view, but with the type (normal vs crap) added
@@ -315,7 +301,9 @@ class Document(object):
                                self.lif.metadata["title"],
                                self.lif.metadata["year"],
                                self.lif.metadata["abstract"])
-        self.annotations.write_index(os.path.join(dirname, "%04d.pckl" % self.id))
+        # since we still use the sentence index for displaying text, these
+        # pickle files do not need to be written
+        # self.annotations.write_index(os.path.join(dirname, "%04d.pckl" % self.id))
 
     def pp(self, prefix=''):
         views = ["%s:%d" % (view.id, len(view)) for view in self.lif.views]
@@ -387,7 +375,7 @@ class DocumentElement(object):
 
     def create_index(self):
         idx = self.document.annotations
-        self.annotations = Annotations(self.document.fname, self.docid, self.id)
+        self.annotations = Annotations(self.document.fname, self.document, self.docid, self.id)
         self.annotations.text = idx.text[self.start:self.end]
         self.annotations.authors = idx.authors
         self.annotations.technologies.add_all(self.filter(idx.technologies.annotations))
@@ -409,29 +397,6 @@ class DocumentElement(object):
         """Return True if the element includes the annotation. Note that the annotation
         is an instance of lif.Annotation or an instance of Relation."""
         return annotation.start >= self.start and annotation.end <= self.end
-
-
-class Section(DocumentElement):
-
-    ID = 0
-
-    def __init__(self, document, section):
-        Section.ID += 1
-        self.id = Section.ID
-        self.docid = document.id
-        self.document = document
-        self.start = section.start
-        self.end = section.end
-        self.tag = section
-        self.create_index()
-
-    def __str__(self):
-        return "<Section %04d:%04d %d-%d %s>" % \
-            (self.docid, self.id, self.start, self.end, self.annotations.count_string())
-
-    def write(self, output_dir):
-        output_file = os.path.join(output_dir, "%04d-%04d.json" % (self.docid, self.id))
-        self.annotations.write(output_file)
 
 
 class Sentence(DocumentElement):
@@ -556,11 +521,12 @@ class Annotations(object):
 
 class IndexedAnnotations(object):
 
-    """An index of all annotation in a file for a particualr type (like "person" or
+    """An index of all annotation in a file for a particular type (like "person" or
     "technology). Keeps the lize, the list of annotations, a set of text strings
     and a couple of dictionaries."""
 
     def __init__(self, doc, annotation_type):
+        #print(doc)
         self.doc = doc
         self.type = annotation_type
         self.size = 0

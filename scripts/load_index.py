@@ -20,12 +20,20 @@ from elastic import Index
 
 def read_documents(document_directory):
     documents = []
-    for fname in sorted(os.listdir(document_directory)):
-        if fname.endswith('.json'):
-            print(fname)
-            fname = os.path.join(document_directory, fname)
+    for directory_element in sorted(os.listdir(document_directory)):
+        if directory_element.endswith('.json'):
+            print(directory_element)
+            fname = os.path.join(document_directory, directory_element)
             json_obj = json.loads(codecs.open(fname, encoding='utf8').read())
             documents.append(json_obj)
+        elif len(directory_element) == 4:
+            print("Collecting sentences from %s" % directory_element)
+            subdir = os.path.join(document_directory, directory_element)
+            for fname in sorted(os.listdir(subdir)):
+                if fname.endswith('.json'):
+                    fname = os.path.join(subdir, fname)
+                    json_obj = json.loads(codecs.open(fname, encoding='utf8').read())
+                    documents.append(json_obj)
     return documents
 
 
@@ -39,4 +47,5 @@ if __name__ == '__main__':
 
     docs = read_documents(source_directory)
     idx = Index(index_name)
+    print("Loading documents into theindex...")
     idx.load(docs)
