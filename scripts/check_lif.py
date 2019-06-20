@@ -40,13 +40,13 @@ def check_files(folder, tagname, limit=999):
 
     
 def check_file(fpath, tagname):
-    print("\n%s\n" % fpath)
+    print("\n{}\n".format(fpath))
     lif = get_lif(fpath)
     text = lif.text.value
     for view in lif.views:
         for anno in view.annotations:
             if anno.type.endswith(tagname):
-                print("   %s  %s" % (tagname, grab_text(text, anno)))
+                print("   {}  {}".format(tagname, grab_text(text, anno)))
 
 
 def get_lif(fpath):

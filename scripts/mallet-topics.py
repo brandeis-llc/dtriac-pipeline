@@ -66,9 +66,9 @@ def read_document_topics(topics):
 
 def print_document_topics(doc_topics):
     for doc_id, doc_name, results in doc_topics:
-        print('\n%s' % os.path.basename(doc_name).replace("%20", ' '))
+        print('\n{}'.format(os.path.basename(doc_name).replace("%20", ' ')))
         for score, (topic, name) in results:
-            print("    %.04f  %2s  %s" % (score, topic, name[:120]))
+            print("    {:.04f}  {:>2}  {}".format(score, topic, name[:120]))
 
 
 def print_topics_with_document(doc_topics):
@@ -77,9 +77,9 @@ def print_topics_with_document(doc_topics):
         for score, (topic, name) in results:
             topics.setdefault((topic, name), []).append(doc_name)
     for topic in sorted(topics):
-        print("%s %s" % (topic[0], topic[1]))
+        print("{} {}".format(topic[0], topic[1]))
         for doc in topics[topic]:
-            print("    %s" % os.path.basename(doc).replace("%20", ' '))
+            print("    {}".format(os.path.basename(doc).replace("%20", ' ')))
 
 
 if __name__ == '__main__':
