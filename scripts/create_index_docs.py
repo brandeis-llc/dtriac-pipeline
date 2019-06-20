@@ -145,7 +145,7 @@ class Document(object):
         self._add_view("sen", LIF(sen_file).views[0])
         self._add_view("rel", Container(rel_file).payload.views[1])
         try:
-            self._add_view("vnc", LIF(vnc_file).views[0])
+            self._add_view("vnc", Container(vnc_file).payload.views[0])
         except ValueError:
             # for the cases where the VNC component fails
             print("WARNING: no json object")
