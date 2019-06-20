@@ -57,10 +57,11 @@ class LappsObject(object):
             self.json_object = json_object
 
     def write(self, fname=None, pretty=False):
+        json_obj = self.as_json()
         if pretty:
-            s = json.dumps(self.json_object, sort_keys=True, indent=4, separators=(',', ': '))
+            s = json.dumps(json_obj, sort_keys=True, indent=4, separators=(',', ': '))
         else:
-            s = json.dumps(self.json_object)
+            s = json.dumps(json_obj)
         fh = sys.stdout if fname is None else codecs.open(fname, 'w')
         fh.write(s + "\n")
 
