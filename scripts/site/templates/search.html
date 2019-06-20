@@ -1,5 +1,7 @@
 {% extends "layout.html" %}
 
+{% set debug = True %}
+
 {% block head %}
 {{ super() }}
 <title>Search</title>
@@ -10,7 +12,12 @@
 <h3 class="title">Search</h3>
 {% endblock %}
 
+
 {% block content %}
+
+{% if debug %}
+<p class="warn">Debugging mode...</p>
+{% endif %}
 
 <form class=searchboxaction="/search" method="post">
   <input type="hidden" name="search" value="true"/>
@@ -26,31 +33,42 @@
 
 <table cellpadding=5 cellspacing=0 border=1 bordercolor=lightgray>
   <tr>
-    <td>Query</td>
+    <td>Search</td>
     <td>{{ query }}</td>
   </tr>
   <tr>
     <td>Hits</td>
     <td>{{ result.sources.__len__() }} / {{ result.total_hits }}</td>
   </tr>
+  {% if debug %}
+  <tr class=gray>
+    <td>Query</td>
+    <td>{{ result.query_json }}</td>
+  </tr>
+  {% endif %}
 </table>
 
 <p/>
 
-<table cellpadding=5 cellspacing=0 border=1 bordercolor=lightgray>
 
-  {% for hit in result.hits %}
+{% for hit in result.hits %}
 
-  <tr>
-    <td>
-      {{ hit.score }}
-      <a href=/doc?sentid={{ hit.source.docid }}>{{ hit.source.docid }}</a> -
-      <span class="fname">{{ hit.source.docname }}</span><br/>
-      {{ hit.source.text }}</td></tr>
+<div class="searchresult">
+  <a href=/doc?sentid={{ hit.source.docid }}>
+    {% if hit.source.title %}
+    {{ hit.source.title }}
+    {% else %}
+    {{ hit.source.docname }}
+    {% endif %}
+  </a>
+  {% if debug %}
+  <span class="gray">{ docid={{ hit.source.docid }} score={{ hit.score }} }</span>
+  {% endif %}
+  <br/><br/>
+  {{ hit.sentence_query_results(sentence_index)|safe }}
+</div>
 
-  {% endfor %}
-
-</table>
+{% endfor %}
 
 {% endif %}
 

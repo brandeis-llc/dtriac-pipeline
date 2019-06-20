@@ -15,25 +15,23 @@ from elastic import Index
 def split_spec(spec):
     s = spec.split(':')
     if len(s) == 1:
-        return { "text": spec }
+        field = "text"
+        value = spec.replace('_', ' ')
     else:
-        return { s[0]: s[1] }
+        field = s[0]
+        value = s[1].replace('_', ' ')
+    match_type = "match_phrase" if ' '  in value else "match"
+    return { match_type: { field: value } }
 
 
 def query(spec):
-    spec = spec.strip()
-    if spec.find(' ') > -1:
-        if spec.startswith('AND'):
-            parts = [c.strip() for c in spec.split()][1:]
-            return query_and(parts)
-        elif spec.startswith('OR'):
-            parts = [c.strip() for c in spec.split()][1:]
-            return query_or(parts)
-        else:
-            parts = [c.strip() for c in spec.split()]
-            return query_and(parts)
+    parts = [p.strip() for p in spec.strip().split()]
+    if parts[0] == 'OR':
+        return query_or(parts[1:])
+    elif parts[0] == 'AND':
+        return query_and(parts[1:])
     else:
-        return { "query": { "match": split_spec(spec) } }
+        return query_and(parts)
 
 
 def query_and(specs):
@@ -45,7 +43,7 @@ def query_or(specs):
 
 
 def query_bool(query_type, specs):
-    matches = [ {"match": split_spec(spec) } for spec in specs ]
+    matches = [ split_spec(spec) for spec in specs ]
     return { "query": { "bool": { query_type: matches } } }
     
 
@@ -84,9 +82,17 @@ if __name__ == '__main__':
 
     idx = Index('demo_documents')
 
-    #test_queries(idx)
+    if False:
+        test_queries(idx)
 
-    for q in ["location:Italy",
-              "location:Italy person:Markov the",
-              "OR location:Italy person:Markov the"]:
-        test_query(idx, q)
+    if False:
+        for q in ["location:Italy",
+                  "location:Italy person:Markov the",
+                  "OR location:Italy person:Markov the"]:
+            test_query(idx, q)
+
+    if True:
+        print query("organization:National_Science_Foundation")
+        print query("OR door organization:National_Science_Foundation")
+        print query("AND location:Italy organization:National_Science_Foundation")
+        print query("technology:graph_coupling")

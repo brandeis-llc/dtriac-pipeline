@@ -12,26 +12,32 @@
 
 {% block content %}
 
-You can do a simple search on the text of documents in the index just by typing in a search term:
+You can do a simple search on the text of documents in the index just by typing
+in a search term, replace spaces in the term with underscores:
 
 <pre class="example">
 communication
+graph_coupling
 </pre>
 
-To search for particular index fields prefix the term with the field and separate field and term by a colon:
+To search for particular index fields prefix the term with the field and
+separate field and term by a colon. Fields can be complex in that they refer to
+sub structure in a relation:
 
 <pre class="example">
+organization:National_Science_Foundation
 technology:communication
-event:assume
-</pre>
-
-Recognized fields are 'technology', 'person', 'location', 'organization' and
-'event'. In addition, relations can be search via complex fields:
-'relation.pred', 'relation.arg1' and 'relation.arg2':
-
-<pre class="example">
+event:connected
+relation.pred:connected
 relation.arg1:communication
 </pre>
+
+Recognized fields are <code>author</code>, <code>technology</code>,
+<code>person</code>, <code>location</code>, <code>organization</code>,
+<code>event</code>, <code>relation.pred</code>, <code>relation.arg1</code>
+and <code>relation.arg2</code>.
+
+<p/>
 
 You can create complex queries:
 
@@ -39,8 +45,9 @@ You can create complex queries:
 location:Italy person:markov
 </pre>
 
-This query will be interpreted as an AND query. You canmake this explicit or
-using an OR query by adding AND or OR to the beginning of the query:
+The query above will be interpreted as an AND query. You can make this explicit
+by adding AND to the beginning of the query, you can also use OR to make the
+query an OR query:
 
 <pre class="example">
 AND location:Italy person:markov lives
