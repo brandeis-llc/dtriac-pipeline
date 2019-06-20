@@ -47,8 +47,8 @@ def read_sample(fname, lif_directory):
     # TODO: this is a bit of a holdover from when the sample was just a list and
     # I pulled elements from the list from the full directory, can probably be
     # removed
-    print fname
-    print lif_directory
+    print(fname)
+    print(lif_directory)
     if fname is not None:
         extension = '.pdf.json.txt'
         fnames = [fname.strip() for fname in codecs.open(fname).readlines()]
@@ -65,7 +65,7 @@ def get_files(fnames, directory, extension):
         if stripped_fname in fnames:
             files[stripped_fname] = os.path.join(directory, fname)
     if len(fnames) != len(files):
-        print "WARNING: unexpected number of files found"
+        print("WARNING: unexpected number of files found")
     return files
 
 
@@ -148,8 +148,8 @@ class Document(object):
             self._add_view("vnc", LIF(vnc_file).views[0])
         except ValueError:
             # for the cases where the VNC component fails
-            print "WARNING: no json object"
-            print "         %s" % os.path.basename(vnc_file)
+            print("WARNING: no json object")
+            print("         %s" % os.path.basename(vnc_file))
         self._add_view("top", LIF(top_file).views[0])
 
     def _add_view(self, identifier, view):
@@ -307,9 +307,9 @@ class Document(object):
 
     def pp(self, prefix=''):
         views = ["%s:%d" % (view.id, len(view)) for view in self.lif.views]
-        print "%s<Document id=%s '%s'>" % (prefix, self.id, self.fname)
-        print "    <Views %s>" % ' '.join(views)
-        print "    %s\n" % self.annotations
+        print("%s<Document id=%s '%s'>" % (prefix, self.id, self.fname))
+        print("    <Views %s>" % ' '.join(views))
+        print("    %s\n" % self.annotations)
 
 
 class Relation(object):
@@ -422,7 +422,7 @@ class Sentence(DocumentElement):
         self.annotations.write(output_file)
 
     def pp(self):
-        print self
+        print(self)
 
 
 class Annotations(object):
@@ -487,8 +487,15 @@ class Annotations(object):
             fh.write(json.dumps(json_object, sort_keys=True, indent=4))
 
     def write_index(self, fname):
-        """Writes the offset and lemma index to a pickle file."""
+        """Writes the text, the offset index and the lemma index to a pickle
+        file. The offsets attribute has, for each category, mappings from the
+        category string to a string that encodes all offsets where the entity
+        occurs. The lemma property maps lemmas to full phrases as they occur in
+        the offsets index."""
+        # TODO: this does not yet include relations
+        # TODO: should include sentence boundaries
         json_object = {
+            "text": self.text,
             "offsets": {
                 "technology": self.technologies.idx_text_offsets,
                 "person": self.persons.idx_text_offsets,
@@ -516,7 +523,7 @@ class Annotations(object):
                  "arg2": relation.arg2_text }
 
     def pp(self, indent=''):
-        print "%s%s\n" % (indent, self)
+        print("%s%s\n" % (indent, self))
 
 
 class IndexedAnnotations(object):
@@ -573,9 +580,9 @@ class IndexedAnnotations(object):
         return self.idx_p1_p2_id
 
     def print_annotations_index(self):
-        print self.type
+        print(self.type)
         for text in sorted(self.idx_text_offsets):
-            print "  %s  %s" % (text, self.idx_text_offsets[text])
+            print("  %s  %s" % (text, self.idx_text_offsets[text]))
 
     def _filter_annotations(self):
         """Filter the list of annotations to make sure that annotations are allowed only

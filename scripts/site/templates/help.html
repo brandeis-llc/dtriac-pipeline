@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+
+{% block head %}
+{{ super() }}
+<title>Help</title>
+{% endblock %}
+
+
+{% block header %}
+<h3 class="title">Help on search</h3>
+{% endblock %}
+
+{% block content %}
+
+You can do a simple search on the text of documents in the index just by typing
+in a search term, replace spaces in the term with underscores:
+
+<pre class="example">
+communication
+graph_coupling
+</pre>
+
+To search for particular index fields prefix the term with the field and
+separate field and term by a colon. Fields can be complex in that they refer to
+sub structure in a relation:
+
+<pre class="example">
+organization:National_Science_Foundation
+technology:communication
+event:connected
+relation.pred:connected
+relation.arg1:communication
+</pre>
+
+Recognized fields are <code>author</code>, <code>technology</code>,
+<code>person</code>, <code>location</code>, <code>organization</code>,
+<code>event</code>, <code>relation.pred</code>, <code>relation.arg1</code>
+and <code>relation.arg2</code>.
+
+<p/>
+
+You can create complex queries:
+
+<pre class="example">
+location:Italy person:markov
+</pre>
+
+The query above will be interpreted as an AND query. You can make this explicit
+by adding AND to the beginning of the query, you can also use OR to make the
+query an OR query:
+
+<pre class="example">
+AND location:Italy person:markov lives
+OR location:Italy person:markov lives
+</pre>
+
+
+<br/>
+<p><a href="/search">back to search</a></p>
+
+{% endblock %}

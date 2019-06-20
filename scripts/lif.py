@@ -37,6 +37,8 @@ import codecs
 import json
 import subprocess
 
+from past.builtins import xrange
+
 
 class LappsObject(object):
 
@@ -55,11 +57,10 @@ class LappsObject(object):
             self.json_object = json_object
 
     def write(self, fname=None, pretty=False):
-        json_obj = self.as_json()
         if pretty:
-            s = json.dumps(json_obj, sort_keys=True, indent=4, separators=(',', ': '))
+            s = json.dumps(self.json_object, sort_keys=True, indent=4, separators=(',', ': '))
         else:
-            s = json.dumps(json_obj)
+            s = json.dumps(self.json_object)
         fh = sys.stdout if fname is None else codecs.open(fname, 'w')
         fh.write(s + "\n")
 
@@ -100,7 +101,7 @@ class LIF(LappsObject):
 
     def __str__(self):
         view_ids = [view.id for view in self.views]
-        return "<LIF with views %s>" % ':'.join(view_ids)
+        return "<LIF with views {}>".format(':'.join(view_ids))
 
     def get_view(self, identifier):
         for view in self.views:
@@ -145,9 +146,9 @@ class LIF(LappsObject):
 
     def _get_new_view_id(self):
         ids = [view.id for view in self.views]
-        for i in xrange(1, sys.maxint):
-            if "v%d" % i not in ids:
-                return "v%d" % i
+        for i in xrange(1, sys.maxsize):
+            if "v{}".format(i) not in ids:
+                return "v{}".format(i)
 
 
 def _get_id(tag):
@@ -167,7 +168,7 @@ TYPE_MAPPINGS = {
 def _get_type(tag):
     vocab = "http://vocab.lappsgrid.org"
     type_name = TYPE_MAPPINGS.get(tag.name)
-    return "%s/%s" % (vocab, type_name) if type_name is not None else None
+    return "{}/{}".format(vocab, type_name) if type_name is not None else None
 
 
 class Text(object):
@@ -180,7 +181,7 @@ class Text(object):
             self.value = json_obj.get('@value')
 
     def __str__(self):
-        return "<Text lang=%s length=%d>" % (self.language, len(self.value))
+        return "<Text lang={} length={:d}>".format(self.language, len(self.value))
 
     def as_json(self):
         d = {"@value": self.value}
@@ -205,7 +206,7 @@ class View(object):
         return len(self.annotations)
 
     def __str__(self):
-        return "<View id=%s with %d annotations>" % (self.id, len(self.annotations))
+        return "<View id={} with {:d} annotations>".format(self.id, len(self.annotations))
 
     def as_json(self):
         d = {"id": self.id,
@@ -216,7 +217,7 @@ class View(object):
     def pp(self):
         print(self)
         for contains in self.metadata["contains"].keys():
-            print('    %s' % contains)
+            print('    {}'.format(contains))
 
 
 class Annotation(object):
@@ -233,8 +234,8 @@ class Annotation(object):
             self.features[feat] = val
 
     def __str__(self):
-        s = "<%s %s %s-%s '%s'>" % (os.path.basename(self.type), self.id,
-                                    self.start, self.end, self.text)
+        s = "<{} {} {}-{} '{}'>".format(os.path.basename(self.type), self.id,
+                                        self.start, self.end, self.text)
         return s.encode('utf-8')
 
     def as_json(self):
@@ -255,7 +256,7 @@ class IdentifierFactory(object):
     @classmethod
     def new_id(cls, tag):
         cls.identifiers[tag.name] += 1
-        return "%s%d" % (tag.name, cls.identifiers[tag.name])
+        return "{}{:d}".format(tag.name, cls.identifiers[tag.name])
 
 
 def compare(file1, file2):

@@ -17,11 +17,23 @@ div.doclinks a:visited { text-decoration: none; }
 div.doclinks a:hover { text-decoration: underline; }
 div.doclinks a:active { text-decoration: none; }
 
-td a:link { text-decoration: none; }
-td a:visited { text-decoration: none; }
-td a:hover { text-decoration: underline; }
-td a:active { text-decoration: none; }
+div.searchresult a:link { text-decoration: none; color: #00c; }
+div.searchresult a:visited { text-decoration: none; color: #00c; }
+div.searchresult a:hover { text-decoration: underline; color: #00c; }
+div.searchresult a:active { text-decoration: none; color: #00c; }
 
 .padded { padding: 8px; }
 
 .bigger { font-size: 22px; }
+
+.gray { color: gray; }
+
+.warn { color: red; }
+
+.searchresult { border: thin solid darkgray; padding: 5px; margin-top: 8px; }
+
+.term { color: #900; font-weight: bold; }
+
+.sentence { }
+
+.example { margin-left: 10px;  padding: 8px; border: thin dotted gray; }

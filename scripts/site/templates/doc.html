@@ -43,7 +43,7 @@
       <td>&nbsp;&nbsp;</td>
       <td>
 	{% for tech in source.technologies() %}
-	<a href="/search?search=true&query=technology:{{tech}}">{{tech}}</a>,
+	<a href="/search?search=true&query=technology:{{tech.replace(' ', '_')}}">{{tech}}</a>,
 	{% endfor %}
       </td>
     </tr>
@@ -52,7 +52,7 @@
       <td>&nbsp;</td>
       <td>
 	{% for person in source.persons() %}
-	<a href="/search?search=true&query=person:{{person}}">{{person}}</a>,
+	<a href="/search?search=true&query=person:{{person.replace(' ', '_')}}">{{person}}</a>,
 	{% endfor %}
       </td>
     </tr>
@@ -61,7 +61,7 @@
       <td>&nbsp;</td>
       <td>
 	{% for loc in source.locations() %}
-	<a href="/search?search=true&query=location:{{loc}}">{{loc}}</a>,
+	<a href="/search?search=true&query=location:{{loc.replace(' ', '_')}}">{{loc}}</a>,
 	{% endfor %}
       </td>
     </tr>
@@ -70,7 +70,7 @@
       <td>&nbsp;</td>
       <td>
 	{% for org in source.organizations() %}
-	<a href="/search?search=true&query=organization:{{org}}">{{org}}</a>,
+	<a href="/search?search=true&query=organization:{{org.replace(' ', '_')}}">{{org}}</a>,
 	{% endfor %}
       </td>
     </tr>

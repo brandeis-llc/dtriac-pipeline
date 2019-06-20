@@ -40,8 +40,7 @@ MINIMUM_RATIO_OF_KNOWN_WORDS = 0.55
 
 LEMMATIZER = WordNetLemmatizer()
 WORDS = set(words.words())
-print "Loaded %s words\n" % len(WORDS)
-
+print("Loaded %s words\n" % len(WORDS))
 
 if DEBUG:
     GOOD = codecs.open('sents-good.txt', 'w', encoding='utf8')
@@ -50,7 +49,7 @@ if DEBUG:
 
 def generate_sentence_types(ttk, sen, words):
     for fname in os.listdir(ttk):
-        print "%s ... " % os.path.basename(fname),
+        print("{} ... ".format(os.path.basename(fname)), end=' ')
         if DEBUG:
             GOOD.write(">>> %s\n>>> %s\n>>> %s\n\n" % ('-' * 100, fname, '-' * 100))
             BAD.write(">>> %s\n>>> %s\n>>> %s\n\n" % ('-' * 100, fname, '-' * 100))
@@ -77,7 +76,7 @@ def generate_sentence_types(ttk, sen, words):
                     anno.features['type'] = 'normal'
                     good_sentences += 1
                 sentences_view.annotations.append(anno)
-        print " (good=%d bad=%d)" % (good_sentences, bad_sentences)
+        print(" (good={:d} bad={:d})".format(good_sentences, bad_sentences))
         lif_out.write(fname=fname_out, pretty=True)
         #break
     print
