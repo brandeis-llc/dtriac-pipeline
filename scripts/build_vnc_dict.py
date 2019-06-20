@@ -16,7 +16,7 @@ def create_dict(lif_dir):
     """
     # Primary dictionary to store all verbnet classes found in the corpus.
     # Should look like;
-    # { verb : set(vbclass1, vbclass2, ...) }
+    # { verb : set(vnclass1, vnclass2, ...) }
     # In most cases, only a single class is associated with a verb.
     # Also don't forget to add the lemma of a verb even the lemma form was never found in the corpus
     # so that a search query with the lemma form can refer to the verbnet class dict.
@@ -30,10 +30,14 @@ def create_dict(lif_dir):
                 for annotation in view.annotations:
                     text = annotation.features['text']
                     lemma = annotation.features['lemma']
-                    vbc = annotation.features['tags'][0]
-                    verbnettags.get(text, set()).add(vbc)
-                    verbnettags.get(lemma, set()).add(vbc)
-    print(json.dumps(verbnettags))
+                    vnc = annotation.features['tags'][0]
+                    if vnc != "None":
+                        for key in (text, lemma):
+                            tags = verbnettags.get(key, [])
+                            if vnc not in tags:
+                                tags.append(vnc)
+                            verbnettags[key] = tags
+    sys.stdout.write(json.dumps(verbnettags, indent=2))
 
 
 if __name__ == "__main__":
