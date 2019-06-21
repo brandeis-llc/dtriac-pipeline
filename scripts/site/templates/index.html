@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 
+
 {% block head %}
 {{ super() }}
+<script src="{{ url_for('static', filename='js/Chart.js') }}"></script>
 <title>Index</title>
 {% endblock %}
 
@@ -13,10 +15,64 @@
 
 {% block content %}
 
+<table>
+  <tr>
+    <td>
+      <div class="bordered" style="width:400px">
+	<canvas id="myChart"></canvas>
+      </div>
+    </td>
+    <td>
+      <div class="bordered" style="width:400px">
+	<canvas id="myChartX"></canvas>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<script>
+var ctx = document.getElementById('myChart');
+var myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ stats.get_years() }},
+        datasets: [{
+	    label: 'document count',
+            data: {{ stats.get_year_counts() }},
+	    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+	            borderColor: 'rgba(55, 55, 55, 0.5)',
+            borderWidth: 1
+        }]
+    },
+    //options: { scales: { yAxes: [{ ticks: { beginAtZero: true } }] } }
+    options: { }
+});
+</script>
+
+<script>
+var ctx = document.getElementById('myChartX');
+var myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels:  {{ stats.get_topics() | safe }},
+        datasets: [{
+	    label: 'document count',
+            data: {{ stats.get_topic_counts() }},
+	    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(55, 55, 55, 0.5)',
+            borderWidth: 1
+        }]
+    },
+    //options: { scales: { yAxes: [{ ticks: { beginAtZero: true } }] } }
+    options: { }
+});
+</script>
+
+<p/>
 <div class="bigger">
 <a href="/docs">List all documents</a>
 <p/>
 <a href="/search">Search document</a></li>
-<?div>
+</div>
 
 {% endblock %}

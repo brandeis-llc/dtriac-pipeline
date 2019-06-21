@@ -58,21 +58,21 @@ queries = [
 
 
 def test_queries(idx):
-    print "Retrieving document with id=0024"
+    print("Retrieving document with id=0024")
     idx.get("0024")
-    print "Retrieving document with id=0026"
+    print("Retrieving document with id=0026")
     idx.get("0026")
     for message, query in queries:
-        print '\n', message
+        print('\n' + message)
         result = idx.search(query)
         result.pp()
     print('')
 
 
 def test_query(idx, q):
-    print q
+    print(q)
     json_query = query(q)
-    print json_query
+    print(json_query)
     result = idx.search(json_query)
     result.pp()
     print('')
@@ -92,7 +92,7 @@ if __name__ == '__main__':
             test_query(idx, q)
 
     if True:
-        print query("organization:National_Science_Foundation")
-        print query("OR door organization:National_Science_Foundation")
-        print query("AND location:Italy organization:National_Science_Foundation")
-        print query("technology:graph_coupling")
+        print(query("organization:National_Science_Foundation"))
+        print(query("OR door organization:National_Science_Foundation"))
+        print(query("AND location:Italy organization:National_Science_Foundation"))
+        print(query("technology:graph_coupling"))

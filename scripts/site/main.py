@@ -3,11 +3,13 @@ from pprint import pformat
 
 from utils.elastic import Index, Source
 from utils.query import query
-from utils.misc import get_var
+from utils.misc import get_var, Statistics
 
 
 INDEX_DOC = Index('demo_documents')
 INDEX_SEN = Index('demo_sentences')
+
+STATS_FILE = 'data/stats.json'
 
 
 app = Flask(__name__)
@@ -15,7 +17,8 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    stats = Statistics(STATS_FILE)
+    return render_template("index.html", stats=stats)
 
 
 @app.route("/search", methods=['GET', 'POST'])

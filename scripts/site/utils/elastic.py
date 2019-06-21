@@ -93,7 +93,8 @@ class Hit(object):
             result = sentence_index.search(query)
             for hit in result.hits[:5]:
                 sentences.append((match, hit.source.text))
-        return "%s" % '<br/>'.join(['<span class="sentence">%s</span>\n' % highlight(s) for s in sentences])
+        sentences = [highlight(s) for s in sentences]
+        return "%s" % '<br/></br/>'.join(['<span class="sentence">%s</span>\n' % s for s in sentences])
 
 
 class Source(object):
@@ -149,8 +150,12 @@ def convert_query(docid, query):
 
 
 def highlight(s):
-    # TODO: this should probably be in some other module
+    # TODO: this should probably be in some other module (even though it uses
+    # some pretty idiosyncratic code to get to the term)
     term = s[0].items()[0][1]
     sentence = s[1]
-    searchterm = r'\b' + term + r'\b'
-    return re.sub(searchterm, '<span class="term">%s</span>' % term, sentence)
+    searchterm = r'\b%s\b' % term
+    matches = list(set(re.findall(searchterm, sentence, flags=re.I)))
+    for match in matches:
+        sentence = re.sub(r'\b%s\b' % match, "<span class='term'>%s</span>" % match, sentence)
+    return sentence
