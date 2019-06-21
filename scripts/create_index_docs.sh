@@ -1,7 +1,6 @@
 #! /bin/bash
 
-repo=/Users/marc/Desktop/projects/dtra/dtra-534
-#repo=/Users/marc/Documents/git/dtra/dtra-534
+repo=..
 
 sample=$repo/sample-files.txt
 
