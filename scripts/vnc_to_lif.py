@@ -30,8 +30,17 @@ def generate_lif(txt, vnc):
     annotations = [line for line in v if line.startswith('#')]
     v.close()
     for annotation in annotations:
-        _, oid, osent, otoken, olemma, olabel = annotation.split('\t')[0].split()
-        s, e = map(int, re.match(r'\d+\[(\d+),(\d+)\]', otoken).groups())
+        splitted = annotation.split('\t')[0].split()
+        
+        oid = splitted[1]
+        osent =  splitted[2]
+        otoken =  splitted[3]
+        olemma =  " ".join(splitted[4:-1]) # some lemmas have space inside
+        olabel = splitted[-1]
+        properly_annotated = re.match(r'\d+\[(\d+),(\d+)\]', otoken)
+        if properly_annotated is None: 
+            continue
+        s, e = map(int, properly_annotated.groups())
         ann = {}
         ann["id"] = "vnc_" + oid
         ann["start"] = s
