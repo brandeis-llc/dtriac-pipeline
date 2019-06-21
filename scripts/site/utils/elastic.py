@@ -22,7 +22,7 @@ class Index(object):
         self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 
     def get_documents(self):
-        query = {"query": {"match_all": {}}}
+        query = { "query": { "match_all": {} } }
         return Result(result=self.es.search(index=self.index, body=query, size=100,
                                             _source_includes=['docid', 'title', 'docname']))
 
@@ -47,12 +47,20 @@ class Result(object):
         self.query_json = query_json
         self.result = result
         self.hits = [Hit(self, hit) for hit in self.result['hits']['hits']]
-        self.total_hits = self.result['hits']['total']['value']
+        self.total_hits = self._get_total_hits()
         self.sources = [hit.source for hit in self.hits]
         self.scroll_id = result.get('_scroll_id')
 
     def __str__(self):
         return "&lt;Result %s>" % self.total_hits
+
+    def _get_total_hits(self):
+        try:
+            # Elastic 7.1.1
+            return self.result['hits']['total']['value']
+        except TypeError:
+            # Elastic 6.4.2
+            return self.result['hits']['total']
 
     def write(self):
         fname = "%04d.txt" % nextint()
@@ -93,7 +101,8 @@ class Hit(object):
             result = sentence_index.search(query)
             for hit in result.hits[:5]:
                 sentences.append((match, hit.source.text))
-        return "%s" % '<br/>'.join(['<span class="sentence">%s</span>\n' % highlight(s) for s in sentences])
+        sentences = [highlight(s) for s in sentences]
+        return "%s" % '<br/></br/>'.join(['<span class="sentence">%s</span>\n' % s for s in sentences])
 
 
 class Source(object):
@@ -137,7 +146,7 @@ def convert_query(docid, query):
     matches = [m.get('match', m.get('match_phrase')) for m in matches]
     queries = []
     for match in matches:
-        match_type = 'match_phrase' if ' ' in match.items()[0][1] else 'match'
+        match_type = 'match_phrase' if ' ' in list(match.items())[0][1] else 'match'
         query = {
             'query': {
                 'bool': {
@@ -149,8 +158,12 @@ def convert_query(docid, query):
 
 
 def highlight(s):
-    # TODO: this should probably be in some other module
-    term = s[0].items()[0][1]
+    # TODO: this should probably be in some other module (even though it uses
+    # some pretty idiosyncratic code to get to the term)
+    term = list(s[0].items())[0][1]
     sentence = s[1]
-    searchterm = r'\b' + term + r'\b'
-    return re.sub(searchterm, '<span class="term">%s</span>' % term, sentence)
+    searchterm = r'\b%s\b' % term
+    matches = list(set(re.findall(searchterm, sentence, flags=re.I)))
+    for match in matches:
+        sentence = re.sub(r'\b%s\b' % match, "<span class='term'>%s</span>" % match, sentence)
+    return sentence
