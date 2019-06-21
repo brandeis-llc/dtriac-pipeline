@@ -6,10 +6,15 @@ Mostly copied from ../../query_index.py.py (bad design, must be changed).
 
 """
 
+import sys
 import codecs
 import json
 
-from elastic import Index
+# there is a better way I thought, but no time to find it now
+if sys.version_info.major == 2:
+    from elastic import Index
+else:
+    from utils.elastic import Index
 
 
 def split_spec(spec):

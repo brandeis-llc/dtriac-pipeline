@@ -138,7 +138,7 @@ def convert_query(docid, query):
     matches = [m.get('match', m.get('match_phrase')) for m in matches]
     queries = []
     for match in matches:
-        match_type = 'match_phrase' if ' ' in match.items()[0][1] else 'match'
+        match_type = 'match_phrase' if ' ' in list(match.items())[0][1] else 'match'
         query = {
             'query': {
                 'bool': {
@@ -152,7 +152,7 @@ def convert_query(docid, query):
 def highlight(s):
     # TODO: this should probably be in some other module (even though it uses
     # some pretty idiosyncratic code to get to the term)
-    term = s[0].items()[0][1]
+    term = list(s[0].items())[0][1]
     sentence = s[1]
     searchterm = r'\b%s\b' % term
     matches = list(set(re.findall(searchterm, sentence, flags=re.I)))
