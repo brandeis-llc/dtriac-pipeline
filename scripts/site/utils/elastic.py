@@ -22,7 +22,7 @@ class Index(object):
         self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 
     def get_documents(self):
-        query = {"query": {"match_all": {}}}
+        query = { "query": { "match_all": {} } }
         return Result(result=self.es.search(index=self.index, body=query, size=100,
                                             _source_includes=['docid', 'title', 'docname']))
 
@@ -47,12 +47,20 @@ class Result(object):
         self.query_json = query_json
         self.result = result
         self.hits = [Hit(self, hit) for hit in self.result['hits']['hits']]
-        self.total_hits = self.result['hits']['total']['value']
+        self.total_hits = self._get_total_hits()
         self.sources = [hit.source for hit in self.hits]
         self.scroll_id = result.get('_scroll_id')
 
     def __str__(self):
         return "&lt;Result %s>" % self.total_hits
+
+    def _get_total_hits(self):
+        try:
+            # Elastic 7.1.1
+            return self.result['hits']['total']['value']
+        except TypeError:
+            # Elastic 6.4.2
+            return self.result['hits']['total']
 
     def write(self):
         fname = "%04d.txt" % nextint()
