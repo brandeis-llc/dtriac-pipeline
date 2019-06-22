@@ -144,12 +144,7 @@ class Document(object):
         self._add_view("ttk", LIF(ttk_file).views[1])
         self._add_view("sen", LIF(sen_file).views[0])
         self._add_view("rel", Container(rel_file).payload.views[1])
-        try:
-            self._add_view("vnc", Container(vnc_file).payload.views[0])
-        except ValueError:
-            # for the cases where the VNC component fails
-            print("WARNING: no json object")
-            print("         %s" % os.path.basename(vnc_file))
+        self._add_view("vnc", Container(vnc_file).payload.views[0])
         self._add_view("top", LIF(top_file).views[0])
 
     def _add_view(self, identifier, view):
@@ -286,7 +281,12 @@ class Document(object):
                     self.annotations.relations.append(relation)
 
     def _add_verbnet_class(self, relation):
-        pass
+        vnc_view = self.get_view("vnc")
+        for vnc_anno in vnc_view.annotations:
+            if vnc_anno.start > relation.pred.start \
+                    and vnc_anno.end < relation.pred.end\
+                    and vnc_anno.features["tags"][0] != "None":
+                relation.vnc = vnc_anno.features["tags"]
 
     def get_sentences(self):
         # take the sentences view, it has the sentences copied from the ttk
