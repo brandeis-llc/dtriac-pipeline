@@ -15,7 +15,7 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - esdata1:/usr/share/elasticsearch/data
+      - ./esdata1:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
     networks:
@@ -37,7 +37,7 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - esdata2:/usr/share/elasticsearch/data
+      - ./esdata2:/usr/share/elasticsearch/data
     networks:
       - esnet
 
@@ -57,7 +57,7 @@ services:
         soft: -1
         hard: -1
     volumes:
-      - esdata3:/usr/share/elasticsearch/data
+      - ./esdata3:/usr/share/elasticsearch/data
     networks:
       - esnet
 
@@ -79,14 +79,6 @@ services:
       - '9201:9100'
     networks:
       - esnet
-
-volumes:
-  esdata1:
-    driver: local
-  esdata2:
-    driver: local
-  esdata3:
-    driver: local
 
 networks:
   esnet:
