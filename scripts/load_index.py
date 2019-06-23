@@ -47,5 +47,5 @@ if __name__ == '__main__':
 
     docs = read_documents(source_directory)
     idx = Index(index_name)
-    print("Loading documents into theindex...")
+    print("Loading documents into the index...")
     idx.load(docs)

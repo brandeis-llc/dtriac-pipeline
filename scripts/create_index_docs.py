@@ -419,7 +419,7 @@ class Sentence(DocumentElement):
 
     def write(self, output_dir):
         output_file = os.path.join(output_dir, "%04d-%04d.json" % (self.docid, self.id))
-        self.annotations.write(output_file)
+        self.annotations.write_sentence(output_file)
 
     def pp(self):
         print(self)
@@ -483,6 +483,21 @@ class Annotations(object):
             "event": self.events.get_text_strings(),
             "time": self.times.get_text_strings(),
             "relation": [self.relation_dict(r) for r in self.relations] }
+        with codecs.open(fname, 'w', encoding='utf8') as fh:
+            fh.write(json.dumps(json_object, sort_keys=True, indent=4))
+
+    def write_sentence(self, fname):
+        """Writes the sentence document with the search fields to a json file."""
+        json_object = { "text": self.text, "docid": self.docid }
+        for (field, value) in [
+                ("technology", self.technologies.get_text_strings()),
+                ("person", self.persons.get_text_strings()),
+                ("location", self.locations.get_text_strings()),
+                ("organization", self.organizations.get_text_strings()),
+                ("event", self.events.get_text_strings()),
+                ("time", self.times.get_text_strings()),
+                ("relation", [self.relation_dict(r) for r in self.relations])]:
+            _add_value(json_object, field, value)
         with codecs.open(fname, 'w', encoding='utf8') as fh:
             fh.write(json.dumps(json_object, sort_keys=True, indent=4))
 
@@ -597,6 +612,13 @@ class IndexedAnnotations(object):
             if p not in self.doc.allowed_offsets:
                 return False
         return True
+
+
+def _add_value(json_object, field, value):
+    """Add a value to a json object (implemented as a Python dictionary), but only
+    if that value is not empty."""
+    if value:
+        json_object[field] = value
 
 
 if __name__ == '__main__':
