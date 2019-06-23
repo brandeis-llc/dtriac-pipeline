@@ -1,0 +1,8 @@
++ markov chain
++ markov chains
++ markov model
++ markov models
+- best procedure
+- well-defined concept
+- 10-min period
+- red cluster

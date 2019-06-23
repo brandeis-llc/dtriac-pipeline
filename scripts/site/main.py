@@ -3,7 +3,7 @@ from pprint import pformat
 
 from utils.elastic import Index, Source
 from utils.query import query
-from utils.misc import get_var, Statistics
+from utils.misc import get_var, Statistics, Kibana
 
 
 INDEX_DOC = Index('demo_documents')
@@ -18,7 +18,8 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     stats = Statistics(STATS_FILE)
-    return render_template("index.html", stats=stats)
+    kibana = Kibana()
+    return render_template("index.html", stats=stats, kibana=kibana)
 
 
 @app.route("/search", methods=['GET', 'POST'])

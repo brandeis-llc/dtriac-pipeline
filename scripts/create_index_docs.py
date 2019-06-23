@@ -29,16 +29,14 @@ See create_index_docs.sh for an example invocation.
 
 """
 
-import os
-import sys
-import codecs
-import json
-import pickle
-import datetime
+import os, sys, re, codecs, json, pickle, time, datetime
 from pprint import pformat
 from collections import Counter
 
-from lif import LIF, Container
+from lif import LIF, Container, Annotation
+
+
+TECHNOLOGY_LIST = 'technologies.txt'
 
 
 def read_sample(fname, lif_directory):
@@ -87,12 +85,14 @@ def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
                      sen_files, rel_files, vnc_files, top_files, ela):
     """Read all the lif files generate for a document and create JSON files for
     documents, sections and sentences."""
+    ontology = TechnologyOntology()
     for fname in sorted(fnames):
         Sentence.ID = 0
         doc = Document(fname,
                        lif_files[fname], ner_files[fname], tex_files[fname],
                        ttk_files[fname], sen_files[fname], rel_files[fname],
-                       vnc_files[fname], top_files[fname])
+                       vnc_files[fname], top_files[fname],
+                       ontology)
         doc.pp()
         doc.write(os.path.join(ela, 'documents'))
         sentences_dir = os.path.join(ela, 'sentences', "%04d" % doc.id)
@@ -101,8 +101,28 @@ def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
             print("Creating directory %s\n" % sentences_dir)
         for sentence in doc.get_sentences():
             sentence.write(sentences_dir)
-        if doc.fname.startswith('88'):
+        if doc.fname.startswith('8'):
             break
+
+
+class TechnologyOntology(object):
+
+    """TechnologyOntology is rather a big word for this since all this does at the
+    moment is to keep a list of technologies and a stoplist of terms that are not
+    technologies."""
+
+    def __init__(self):
+        self.technologies = set()
+        self.stoplist = set()
+        for line in open(TECHNOLOGY_LIST):
+            tokens = line.strip().split()
+            if tokens:
+                sign = tokens[0]
+                term = ' '.join(tokens[1:])
+                if sign == '+':
+                    self.technologies.add(term)
+                else:
+                    self.stoplist.add(term)
 
 
 class Document(object):
@@ -116,11 +136,13 @@ class Document(object):
 
     def __init__(self,
                  fname, lif_file, ner_file, tex_file,
-                 ttk_file, sen_file, rel_file, vnc_file, top_file):
+                 ttk_file, sen_file, rel_file, vnc_file, top_file,
+                 ontology):
         """Build a single LIF object with all relevant annotations. The annotations
         themselves are stored in the Annotations object in self.annotations."""
         self.id = Document.new_id()
         self.fname = fname
+        self.ontology = ontology
         self.lif = Container(lif_file).payload
         self._add_views(ner_file, tex_file, ttk_file, sen_file, rel_file,
                         vnc_file, top_file)
@@ -223,6 +245,7 @@ class Document(object):
                  self.annotations.topics.append(topic_name)
                  for topic_element in topic_name.split():
                      self.annotations.topic_elements.append(topic_element)
+        self.annotations.topic_elements = sorted(set(self.annotations.topic_elements))
 
     def _collect_sentences(self):
         view = self.get_view("sen")
@@ -250,6 +273,7 @@ class Document(object):
         for tech in view.annotations:
             tech.text = self.get_text(tech)
             self.annotations.technologies.add(tech)
+        self._update_technologies()
         self.annotations.technologies.finish()
 
     def _collect_events(self):
@@ -287,6 +311,43 @@ class Document(object):
 
     def _add_verbnet_class(self, relation):
         pass
+
+    def _update_technologies(self):
+        """Goes throught the list of technologies and removes those that are on the
+        stoplist of the technology ontology and adds technologies that occur in the
+        ontology as well as in the text."""
+        self._remove_technologies()
+        self._add_technologies()
+
+    def _remove_technologies(self):
+        technologies = self.annotations.technologies
+        for term in self.ontology.stoplist:
+            if term in technologies.texts:
+                technologies.texts.remove(term)
+        technologies.annotations = [a for a in technologies.annotations
+                                    if not a.text in self.ontology.stoplist]
+
+    def _add_technologies(self):
+        """Takes the technology ontology and tries to add each element to the
+        technologies index of this document. Add only if the technology term
+        occurs in the text. This is done rather inefficiently by searching the
+        entire text # for each technology, but on a 30K LIF document this takes
+        less than # 0.01 seconds for 100 technology terms, so we can live with
+        this."""
+        technologies = self.annotations.technologies
+        next_id = max([int(a.id[1:]) for a in technologies.annotations]) + 1
+        print len(technologies.texts), len(technologies.annotations)
+        for term in self.ontology.technologies:
+            searchterm = r'\b%s\b' % term
+            matches = list(re.finditer(searchterm, self.annotations.text, flags=re.I))
+            for match in matches:
+                json_obj = { "id": "t%d" % next_id,
+                             "@type": 'http://vocab.lappsgrid.org/Technology',
+                             "start": match.start(), "end": match.end() }
+                next_id += 1
+                anno = Annotation(json_obj)
+                anno.text = term
+                technologies.add(anno)
 
     def get_sentences(self):
         # take the sentences view, it has the sentences copied from the ttk

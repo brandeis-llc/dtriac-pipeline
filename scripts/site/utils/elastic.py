@@ -94,15 +94,79 @@ class Hit(object):
     def __str__(self):
         return "&lt;Hit %s>" % self.id
 
-    def sentence_query_results(self, sentence_index):
-        queries = convert_query(self.source.docid, self.result.query_json)
-        sentences = []
-        for match, query in queries:
+    def sentence_groups(self, sentence_index):
+        groups = SentenceGroups(self.source.docid, self.result.query_json)
+        for match, query in groups.queries:
             result = sentence_index.search(query)
-            for hit in result.hits[:5]:
-                sentences.append((match, hit.source.text))
-        sentences = [highlight(s) for s in sentences]
-        return "%s" % '<br/></br/>'.join(['<span class="sentence">%s</span>\n' % s for s in sentences])
+            groups.add_group(SentenceGroup(match, query, result))
+        return groups
+
+
+class SentenceGroups(object):
+
+    """A SentenceGroups instance is defined by a document and the query that ran
+    over that document. """
+
+    def __init__(self, docid, query):
+        self.docid = docid
+        self.query = query
+        self.queries = []
+        self.groups = []
+        self.convert_query()
+        
+    def convert_query(self):
+        """Takes the query used for the document index and transforms it into a list of
+        queries for the sentences index. There will be a query for each element of
+        the original query, but it will be put into an AND with a query for the
+        docid."""
+        # TODO: one thing that goes a bit wrong is when you search on pred AND arg,
+        # in which case the AND link gets lost and will be replaced with an OR.
+        bool = self.query['query']['bool']
+        matches = bool.get('must', bool.get('should'))
+        matches = [m.get('match', m.get('match_phrase')) for m in matches]
+        for match in matches:
+            match_type = 'match_phrase' if ' ' in list(match.items())[0][1] else 'match'
+            query = {
+                'query': {
+                    'bool': {
+                        'must': [
+                            { 'match': { 'docid': self.docid } },
+                            { match_type: match} ] } } }
+            self.queries.append((match, query))
+
+    def add_group(self, group):
+        self.groups.append(group)
+
+
+class SentenceGroup(object):
+
+    """A SentenceGroup is defined by a query """
+
+    def __init__(self, match, query, result):
+        self.match = match
+        self.query = query
+        self.result = result
+        self.sentences = []
+        for hit in result.hits[:5]:
+            self.sentences.append(Sentence(self.match, hit))
+
+
+class Sentence(object):
+    
+    def __init__(self, match, hit):
+        self.match = match
+        self.id = hit.id
+        self.score = hit.score
+        self.text = hit.source.text
+        self.highlight()
+
+    def highlight(self):
+        term = list(self.match.items())[0][1]
+        searchterm = r'\b%s\b' % term
+        matches = list(set(re.findall(searchterm, self.text, flags=re.I)))
+        for match in matches:
+            self.text = re.sub(r'\b%s\b' % match, "<span class='term'>%s</span>" % match, self.text)
+
 
 
 class Source(object):
@@ -132,38 +196,3 @@ class Source(object):
     def technology_links(self):
         return ['<a href="/search?search=true&query=%s">%s</a>' % (tech, tech)
                 for tech in self.technologies()]
-
-
-def convert_query(docid, query):
-    """Takes the query used for the document index and transforms it into a list of
-    queries for the sentences index. There will be a query for each element of
-    the original query, but it will be put into an AND with a query for the
-    docid."""
-    # TODO: one thing that goes a bit wrong is when you search on pred AND arg,
-    # in which case the AND link gets lost and will be replaced with an OR.
-    bool = query['query']['bool']
-    matches = bool.get('must', bool.get('should'))
-    matches = [m.get('match', m.get('match_phrase')) for m in matches]
-    queries = []
-    for match in matches:
-        match_type = 'match_phrase' if ' ' in list(match.items())[0][1] else 'match'
-        query = {
-            'query': {
-                'bool': {
-                    'must': [
-                        { 'match': { 'docid': docid } },
-                        { match_type: match} ] } } }
-        queries.append((match, query))
-    return queries
-
-
-def highlight(s):
-    # TODO: this should probably be in some other module (even though it uses
-    # some pretty idiosyncratic code to get to the term)
-    term = list(s[0].items())[0][1]
-    sentence = s[1]
-    searchterm = r'\b%s\b' % term
-    matches = list(set(re.findall(searchterm, sentence, flags=re.I)))
-    for match in matches:
-        sentence = re.sub(r'\b%s\b' % match, "<span class='term'>%s</span>" % match, sentence)
-    return sentence

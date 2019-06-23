@@ -47,6 +47,24 @@ class Statistics(object):
         return [count for (topic, count) in self.get_topic_data()]
 
 
+class Kibana(object):
+
+    KIBANA_LINK_GENERAL = 'data/kibana_link_general.txt'
+    KIBANA_LINK_TERM = 'data/kibana_link_term.txt'
+
+    def __init__(self):
+        self._general = open(Kibana.KIBANA_LINK_GENERAL).read().strip()
+        self._term = open(Kibana.KIBANA_LINK_TERM).read().strip()
+
+    def link(self):
+        return self._general
+
+    def term(self, term):
+        term = term.replace('_', '%20')
+        term = term.replace(' ', '%20')
+        return self._term.replace('FIELD', 'technology').replace('TERM', term)
+
+
 if __name__ == '__main__':
 
     stats = Statistics('../data/stats.json')

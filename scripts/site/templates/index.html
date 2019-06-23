@@ -19,19 +19,19 @@
   <tr>
     <td>
       <div class="bordered" style="width:400px">
-	<canvas id="myChart"></canvas>
+	<canvas id="chart_document_count"></canvas>
       </div>
     </td>
     <td>
       <div class="bordered" style="width:400px">
-	<canvas id="myChartX"></canvas>
+	<canvas id="chart_topic_count"></canvas>
       </div>
     </td>
   </tr>
 </table>
 
 <script>
-var ctx = document.getElementById('myChart');
+var ctx = document.getElementById('chart_document_count');
 var myChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -44,13 +44,12 @@ var myChart = new Chart(ctx, {
             borderWidth: 1
         }]
     },
-    //options: { scales: { yAxes: [{ ticks: { beginAtZero: true } }] } }
     options: { }
 });
 </script>
 
 <script>
-var ctx = document.getElementById('myChartX');
+var ctx = document.getElementById('chart_topic_count');
 var myChart = new Chart(ctx, {
     type: 'bar',
     data: {
@@ -63,7 +62,6 @@ var myChart = new Chart(ctx, {
             borderWidth: 1
         }]
     },
-    //options: { scales: { yAxes: [{ ticks: { beginAtZero: true } }] } }
     options: { }
 });
 </script>
@@ -73,6 +71,13 @@ var myChart = new Chart(ctx, {
 <a href="/docs">List all documents</a>
 <p/>
 <a href="/search">Search documents</a></li>
+<p/>
+<a href="{{ kibana.link() }}">Kibana visualization</a>
+<ul>
+  <li><a href="{{ kibana.term('epidemic models') }}">epidemic models</a></li>
+  <li><a href="{{ kibana.term('black_triangles') }}">black triangles</a></li>
+  <li><a href="{{ kibana.term('control%20objective') }}">control objective</a></li>
+</ul>
 </div>
 
 {% endblock %}
