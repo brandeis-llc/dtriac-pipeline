@@ -18,16 +18,20 @@
 <table>
   <tr>
     <td>
-      <div class="bordered" style="width:400px">
+      <div class="bordered" style="width:400px;">
 	<canvas id="chart_document_count"></canvas>
       </div>
     </td>
+  </tr>
+  <!--
+  <tr>
     <td>
-      <div class="bordered" style="width:400px">
+      <div class="bordered" style="width:400px;">
 	<canvas id="chart_topic_count"></canvas>
       </div>
     </td>
   </tr>
+  -->
 </table>
 
 <script>
@@ -62,7 +66,9 @@ var myChart = new Chart(ctx, {
             borderWidth: 1
         }]
     },
-    options: { }
+    options: {
+	scales: { yAxes: [ { ticks: { beginAtZero: false } } ] }
+    },
 });
 </script>
 
@@ -73,11 +79,13 @@ var myChart = new Chart(ctx, {
 <a href="/search">Search documents</a></li>
 <p/>
 <a href="{{ kibana.link() }}">Kibana visualization</a>
+<!--
 <ul>
   <li><a href="{{ kibana.term('epidemic models') }}">epidemic models</a></li>
   <li><a href="{{ kibana.term('black_triangles') }}">black triangles</a></li>
   <li><a href="{{ kibana.term('control%20objective') }}">control objective</a></li>
 </ul>
+-->
 </div>
 
 {% endblock %}

@@ -8,6 +8,12 @@ This processes all files in LIF_DIR and writes to OUT_DIR.
 
 """
 
+# TODO: give model building a separate flag
+# TODO: add topic model directory as a parameter
+# TODO: code now assumes that ../topics exists
+# TODO: code also assumes that OUT_DIR exists
+
+
 import os
 import sys
 import codecs
@@ -71,8 +77,9 @@ def _collect_data(lif_dir):
     return all_data
 
 
-def print_model():
-    lda = load_model()
+def print_model(lda=None):
+    if lda is None:
+        lda = load_model()
     topics = lda.print_topics(num_words=5)
     print('\nTop 20 topics of total {:d} topics:\n'.format(len(lda.get_topics())))
     for topic in topics:
@@ -96,8 +103,12 @@ def generate_topics(lif, top):
 
     for fname in os.listdir(lif):
 
+        if not fname.endswith('.lif'):
+            continue
+        # if not fname.startswith('z'): continue
+
         topic_id = 0
-        print("\n{}".format(os.path.basename(fname)))
+        print("{}".format(os.path.basename(fname)))
         fname_in = os.path.join(lif, fname)
         fname_out = os.path.join(top, fname)
         lif_in = Container(fname_in).payload
@@ -117,11 +128,7 @@ def generate_topics(lif, top):
             # print('   %3d  %.04f  %s' % (topic[0], topic[1], lemmas))
             topics_view.annotations.append(
                 topic_annotation(topic, topic_id, lemmas))
-
         lif_out.write(fname=fname_out, pretty=True)
-
-        if fname.startswith('88'):
-            break
 
 
 def prepare_text_for_lda(text):

@@ -38,7 +38,7 @@ class Statistics(object):
     def get_topic_data(self):
         """Return a list of the 10 most common topics with their counts. Returns a list
         of <topic, document_count> pairs."""
-        return Counter(self.topics).most_common(10)
+        return Counter(self.topics).most_common(40)
 
     def get_topics(self):
         return "[%s]" % ', '.join(["'%s'" % topic for (topic, count) in self.get_topic_data()])

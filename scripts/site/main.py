@@ -6,10 +6,11 @@ from utils.query import query
 from utils.misc import get_var, Statistics, Kibana
 
 
-INDEX_DOC = Index('demo_documents')
-INDEX_SEN = Index('demo_sentences')
+INDEX_DOC = Index('demo_documents_479')
+INDEX_SEN = Index('demo_sentences_479')
 
 STATS_FILE = 'data/stats.json'
+STATS_FILE = 'data/stats-479.json'
 
 
 app = Flask(__name__)
