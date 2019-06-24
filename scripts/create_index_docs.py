@@ -5,7 +5,7 @@ into ElasticSearch.
 
 Usage:
 
-$ python create_index_docs.py LIF NER TEX TTK SEN REL VNC TOP ELA SAMPLE_FILE?
+$ python create_index_docs.py LIF NER TEX TTK SEN REL VNC TOP ELA
 
 The first eight arguments are all the input directories with the following
 content:
@@ -21,88 +21,95 @@ TOP - Result of adding verbnet classes to LIF
 
 The ELA argument refers to the output directory.
 
-The optional SAMPLE_FILE contains a list of all files that should be included by
-this script. Without it, all files in LIF will be used and it will be assumed
-that NER, TEX, TTK and REL have analyses for all the files in LIF.
-
 See create_index_docs.sh for an example invocation.
 
 """
 
-import os
-import sys
-import codecs
-import json
-import pickle
-import datetime
+import os, sys, re, codecs, json, pickle, time, datetime
 from pprint import pformat
 from collections import Counter
 
-from lif import LIF, Container
+from lif import LIF, Container, Annotation
 
 
-def read_sample(fname, lif_directory):
-    """Return a set of all filenames in fname, with the extensions stripped. If
-    fname is None return the set of file names in lif_directory."""
-    # TODO: this is a bit of a holdover from when the sample was just a list and
-    # I pulled elements from the list from the full directory, can probably be
-    # removed
-    print(fname)
-    print(lif_directory)
-    if fname is not None:
-        extension = '.pdf.json.txt'
-        fnames = [fname.strip() for fname in codecs.open(fname).readlines()]
-    else:
-        extension = '.lif'
-        fnames = os.listdir(lif_directory)
-    return set([fname[:-len(extension)] for fname in fnames])
+TECHNOLOGY_LIST = 'technologies.txt'
 
 
-def get_files(fnames, directory, extension):
-    files = {}
-    for fname in sorted(os.listdir(directory)):
-        stripped_fname = fname[:-len(extension)]
-        if stripped_fname in fnames:
-            files[stripped_fname] = os.path.join(directory, fname)
-    if len(fnames) != len(files):
-        print("WARNING: unexpected number of files found")
-    return files
 
+def create_documents(lif, ner, tex, ttk, sen, rel, vnc, top, ela):
 
-def print_files(fnames, lif_files, ner_files, tex_files, ttk_files, sen_files,
-                rel_files, vnc_files, top_files):
-    for fname in sorted(fnames):
-        print("\n%s" % fname)
-        print('   lif: %s' % lif_files.get(fname))
-        print('   ner: %s' % ner_files.get(fname))
-        print('   tex: %s' % tex_files.get(fname))
-        print('   ttk: %s' % ttk_files.get(fname))
-        print('   sen: %s' % sen_files.get(fname))
-        print('   rel: %s' % rel_files.get(fname))
-        print('   vnc: %s' % vnc_files.get(fname))
-        print('   top: %s' % top_files.get(fname))
-
-
-def create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
-                     sen_files, rel_files, vnc_files, top_files, ela):
     """Read all the lif files generate for a document and create JSON files for
     documents, sections and sentences."""
+
+    ontology = TechnologyOntology()
+
+    LIF_EXTENSION = '.pdf.lif'
+    NER_EXTENSION = '.pdf.lif'
+    SEN_EXTENSION = '.pdf.lif'
+    REL_EXTENSION = '.pdf.lif'
+    TEX_EXTENSION = '.lif'
+    TOP_EXTENSION = '.pdf.lif'
+    TTK_EXTENSION = '.pdf.lif'
+    VNC_EXTENSION = '.pdf.json.txt.lif'
+
+    fnames = [fname[:-len(LIF_EXTENSION)] for fname in os.listdir(lif)]
+
     for fname in sorted(fnames):
-        Sentence.ID = 0
-        doc = Document(fname,
-                       lif_files[fname], ner_files[fname], tex_files[fname],
-                       ttk_files[fname], sen_files[fname], rel_files[fname],
-                       vnc_files[fname], top_files[fname])
-        doc.pp()
-        doc.write(os.path.join(ela, 'documents'))
-        sentences_dir = os.path.join(ela, 'sentences', "%04d" % doc.id)
-        if not os.path.exists(sentences_dir):
-            os.makedirs(sentences_dir)
-            print("Creating directory %s\n" % sentences_dir)
-        for sentence in doc.get_sentences():
-            sentence.write(sentences_dir)
-        if doc.fname.startswith('88'):
-            break
+
+        #if not fname.startswith('8_'): continue
+
+        try:
+
+            lif_file = os.path.join(ner, fname + LIF_EXTENSION)
+            ner_file = os.path.join(ner, fname + NER_EXTENSION)
+            tex_file = os.path.join(tex, fname + TEX_EXTENSION)
+            ttk_file = os.path.join(ttk, fname + TTK_EXTENSION)
+            sen_file = os.path.join(sen, fname + SEN_EXTENSION)
+            rel_file = os.path.join(rel, fname + REL_EXTENSION)
+            vnc_file = os.path.join(vnc, fname + VNC_EXTENSION)
+            top_file = os.path.join(top, fname + TOP_EXTENSION)
+
+            if not (os.path.exists(ner_file) and os.path.exists(tex_file)
+                    and os.path.exists(ttk_file) and os.path.exists(sen_file)
+                    and os.path.exists(rel_file) and os.path.exists(vnc_file)
+                    and os.path.exists(top_file)):
+                print('Skipping...  %s' % fname)
+                continue
+
+            Sentence.ID = 0
+            doc = Document(fname, lif_file, ner_file, tex_file, ttk_file,
+                           sen_file, rel_file,vnc_file, top_file, ontology)
+            print("%04d  %s" % (doc.id, doc.fname))
+            doc.write(os.path.join(ela, 'documents'))
+            sentences_dir = os.path.join(ela, 'sentences', "%04d" % doc.id)
+            if not os.path.exists(sentences_dir):
+                os.makedirs(sentences_dir)
+                #print("Creating directory %s\n" % sentences_dir)
+            for sentence in doc.get_sentences():
+                sentence.write(sentences_dir)
+
+        except:
+            print("ERROR on '%s'" % fname)
+
+
+class TechnologyOntology(object):
+
+    """TechnologyOntology is rather a big word for this since all this does at the
+    moment is to keep a list of technologies and a stoplist of terms that are not
+    technologies."""
+
+    def __init__(self):
+        self.technologies = set()
+        self.stoplist = set()
+        for line in open(TECHNOLOGY_LIST):
+            tokens = line.strip().split()
+            if tokens:
+                sign = tokens[0]
+                term = ' '.join(tokens[1:])
+                if sign == '+':
+                    self.technologies.add(term)
+                else:
+                    self.stoplist.add(term)
 
 
 class Document(object):
@@ -116,11 +123,13 @@ class Document(object):
 
     def __init__(self,
                  fname, lif_file, ner_file, tex_file,
-                 ttk_file, sen_file, rel_file, vnc_file, top_file):
+                 ttk_file, sen_file, rel_file, vnc_file, top_file,
+                 ontology):
         """Build a single LIF object with all relevant annotations. The annotations
         themselves are stored in the Annotations object in self.annotations."""
         self.id = Document.new_id()
         self.fname = fname
+        self.ontology = ontology
         self.lif = Container(lif_file).payload
         self._add_views(ner_file, tex_file, ttk_file, sen_file, rel_file,
                         vnc_file, top_file)
@@ -144,12 +153,7 @@ class Document(object):
         self._add_view("ttk", LIF(ttk_file).views[1])
         self._add_view("sen", LIF(sen_file).views[0])
         self._add_view("rel", Container(rel_file).payload.views[1])
-        try:
-            self._add_view("vnc", LIF(vnc_file).views[0])
-        except ValueError:
-            # for the cases where the VNC component fails
-            print("WARNING: no json object")
-            print("         %s" % os.path.basename(vnc_file))
+        self._add_view("vnc", Container(vnc_file).payload.views[0])
         self._add_view("top", LIF(top_file).views[0])
 
     def _add_view(self, identifier, view):
@@ -223,6 +227,7 @@ class Document(object):
                  self.annotations.topics.append(topic_name)
                  for topic_element in topic_name.split():
                      self.annotations.topic_elements.append(topic_element)
+        self.annotations.topic_elements = sorted(set(self.annotations.topic_elements))
 
     def _collect_sentences(self):
         view = self.get_view("sen")
@@ -250,6 +255,7 @@ class Document(object):
         for tech in view.annotations:
             tech.text = self.get_text(tech)
             self.annotations.technologies.add(tech)
+        self._update_technologies()
         self.annotations.technologies.finish()
 
     def _collect_events(self):
@@ -276,17 +282,72 @@ class Document(object):
         self.annotations.vnc.finish()
 
     def _collect_relations(self):
+        #vnc_view = self.get_view("vnc")
+        #for anno in vnc_view.annotations:
+        #    obj = anno.as_json()
+        #    thingie = "%s-%s %s %s" % (obj['start'], obj['end'], obj['features']['lemma'],
+        #                               ' '.join(obj['features']['tags']))
+        #    print(thingie)
         view = self.get_view("rel")
         idx = { anno.id: anno for anno in view.annotations if anno.type.endswith('Markable') }
         for annotation in view.annotations:
             if annotation.type.endswith('GenericRelation'):
                 relation = Relation(self, idx, annotation)
+                #print(relation)
                 self._add_verbnet_class(relation)
+                #print(relation)
+                #print('')
                 if relation.is_acceptable():
                     self.annotations.relations.append(relation)
 
     def _add_verbnet_class(self, relation):
-        pass
+        vnc_view = self.get_view("vnc")
+        #print(relation.start, relation.end, relation.pred.start, relation.pred.end)
+        #print(self.annotations.text[relation.start:relation.end])
+        for vnc_anno in vnc_view.annotations:
+            #if relation.start == 66:
+            #    print('  ' , vnc_anno.start, vnc_anno.end,vnc_anno.text)
+            if vnc_anno.start >= relation.pred.start \
+               and vnc_anno.end <= relation.pred.end + 1 \
+               and vnc_anno.features["tags"][0] != "None":
+                relation.vnc = vnc_anno.features["tags"]
+
+    def _update_technologies(self):
+        """Goes throught the list of technologies and removes those that are on the
+        stoplist of the technology ontology and adds technologies that occur in the
+        ontology as well as in the text."""
+        self._remove_technologies()
+        self._add_technologies()
+
+    def _remove_technologies(self):
+        technologies = self.annotations.technologies
+        for term in self.ontology.stoplist:
+            if term in technologies.texts:
+                technologies.texts.remove(term)
+        technologies.annotations = [a for a in technologies.annotations
+                                    if not a.text in self.ontology.stoplist]
+
+    def _add_technologies(self):
+        """Takes the technology ontology and tries to add each element to the
+        technologies index of this document. Add only if the technology term
+        occurs in the text. This is done rather inefficiently by searching the
+        entire text # for each technology, but on a 30K LIF document this takes
+        less than # 0.01 seconds for 100 technology terms, so we can live with
+        this."""
+        technologies = self.annotations.technologies
+        next_id = max([int(a.id[1:]) for a in technologies.annotations]) + 1
+        #print len(technologies.texts), len(technologies.annotations)
+        for term in self.ontology.technologies:
+            searchterm = r'\b%s\b' % term
+            matches = list(re.finditer(searchterm, self.annotations.text, flags=re.I))
+            for match in matches:
+                json_obj = { "id": "t%d" % next_id,
+                             "@type": 'http://vocab.lappsgrid.org/Technology',
+                             "start": match.start(), "end": match.end() }
+                next_id += 1
+                anno = Annotation(json_obj)
+                anno.text = term
+                technologies.add(anno)
 
     def get_sentences(self):
         # take the sentences view, it has the sentences copied from the ttk
@@ -331,8 +392,8 @@ class Relation(object):
         self.vnc = None
 
     def __str__(self):
-        return "<Relation %d-%d %s>" \
-            % (self.start, self.end, self.pred_text.replace("\n", ' '))
+        return "<Relation %d-%d %s vnc=%s>" \
+            % (self.start, self.end, self.pred_text.replace("\n", ' '), self.vnc)
 
     def is_acceptable(self):
         return self.predicate_is_event() and self.arguments_contain_entity()
@@ -533,7 +594,7 @@ class Annotations(object):
 
     def relation_dict(self, relation):
         return { "pred": relation.pred_text,
-                 "vnc": relation.vnc,
+                 #"vnc": relation.vnc,
                  "arg1": relation.arg1_text,
                  "arg2": relation.arg2_text }
 
@@ -624,18 +685,4 @@ def _add_value(json_object, field, value):
 if __name__ == '__main__':
 
     lif, ner, tex, ttk, sen, rel, vnc, top, ela = sys.argv[1:10]
-    sample = None if len(sys.argv) < 11 else sys.argv[10]
-
-    fnames = read_sample(sample, lif)
-    lif_files = get_files(fnames, lif, '.lif')
-    ner_files = get_files(fnames, ner, '.lif')
-    tex_files = get_files(fnames, tex, '.lif')
-    ttk_files = get_files(fnames, ttk, '.lif')
-    sen_files = get_files(fnames, sen, '.lif')
-    rel_files = get_files(fnames, rel, '.lif')
-    vnc_files = get_files(fnames, vnc, '.lif')
-    top_files = get_files(fnames, top, '.lif')
-    #print_files(fnames, lif_files, ner_files, tex_files, ttk_files,
-    #            sen_files, rel_files, vnc_files, top_files)
-    create_documents(fnames, lif_files, ner_files, tex_files, ttk_files,
-                     sen_files, rel_files, vnc_files, top_files, ela)
+    create_documents(lif, ner, tex, ttk, sen, rel, vnc, top, ela)

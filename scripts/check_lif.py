@@ -46,7 +46,7 @@ def check_file(fpath, tagname):
     for view in lif.views:
         for anno in view.annotations:
             if anno.type.endswith(tagname):
-                print("   {}  {}".format(tagname, grab_text(text, anno)))
+                print("   {}  {}-{}  {}".format(tagname, anno.start, anno.end, grab_text(text, anno)))
 
 
 def get_lif(fpath):

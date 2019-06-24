@@ -57,6 +57,8 @@ class LappsObject(object):
             self.json_object = json_object
 
     def write(self, fname=None, pretty=False):
+        # first update the json object for those case where it has been changed
+        self.json_object = self.as_json()
         if pretty:
             s = json.dumps(self.json_object, sort_keys=True, indent=4, separators=(',', ': '))
         else:

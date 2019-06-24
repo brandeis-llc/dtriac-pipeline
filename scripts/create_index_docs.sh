@@ -1,9 +1,6 @@
 #! /bin/bash
 
 repo=..
-
-sample=$repo/sample-files.txt
-
 lif=$repo/samples/small-25-lif
 ner=$repo/samples/small-25-ner
 tex=$repo/samples/small-25-tex
@@ -12,8 +9,17 @@ sen=$repo/samples/small-25-sen
 rel=$repo/samples/small-25-rel
 vnc=$repo/samples/small-25-vnc
 top=$repo/samples/small-25-top
+ela=$repo/samples/small-25-ela
 
-#ela=$repo/samples/small-25-ela
-ela=$repo/samples/tmp
+repo=/DATA/dtra/dtra-534-full-annotated
+lif=$repo/spv1-results-lif
+ner=$repo/spv1-results-lif-ner
+rel=$repo/spv1-results-lif-rel
+tex=$repo/spv1-results-lif-tex
+ttk=$repo/spv1-results-lif-ttk
+sen=$repo/spv1-results-lif-sen
+vnc=$repo/spv1-results-lif-vnc
+top=$repo/spv1-results-lif-top
+ela=$repo/spv1-results-lif-ela
 
-python create_index_docs.py $lif $ner $tex $ttk $sen $rel $vnc $top $ela $sample
+python3 create_index_docs.py $lif $ner $tex $ttk $sen $rel $vnc $top $ela

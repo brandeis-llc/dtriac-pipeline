@@ -17,13 +17,24 @@ else:
     from utils.elastic import Index
 
 
+
+field_abbreviations = {
+    'a': 'author', 't': 'technology', 'p': 'person', 'l': 'location',
+    'o': 'organization', 'e': 'event', 'pred': 'relation.pred',
+    'arg1': 'relation.arg1', 'arg2': 'relation.arg2' }
+
+
+def expand(field):
+    return field_abbreviations.get(field, field)
+
+
 def split_spec(spec):
     s = spec.split(':')
     if len(s) == 1:
         field = "text"
         value = spec.replace('_', ' ')
     else:
-        field = s[0]
+        field = expand(s[0])
         value = s[1].replace('_', ' ')
     match_type = "match_phrase" if ' '  in value else "match"
     return { match_type: { field: value } }

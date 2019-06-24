@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% set debug = True %}
+{% set debug = False %}
 
 {% block head %}
 {{ super() }}
@@ -28,7 +28,7 @@
 <form>
 
 <p/>
-  
+
 {% if result %}
 
 <table cellpadding=5 cellspacing=0 border=1 bordercolor=lightgray>
@@ -54,6 +54,7 @@
 {% for hit in result.hits %}
 
 <div class="searchresult">
+
   <a href=/doc?sentid={{ hit.source.docid }}>
     {% if hit.source.title %}
     {{ hit.source.title }}
@@ -61,11 +62,37 @@
     {{ hit.source.docname }}
     {% endif %}
   </a>
+
   {% if debug %}
-  <span class="gray">{ docid={{ hit.source.docid }} score={{ hit.score }} }</span>
+  <span class="gray">
+    <br/>
+    { docid={{ hit.source.docid }} score={{ hit.score }} } <br/>
+    { {{ hit.source.docname }} }
+  </span>
   {% endif %}
-  <br/><br/>
-  {{ hit.sentence_query_results(sentence_index)|safe }}
+
+  {% for result in hit.sentence_groups(sentence_index).groups %}
+
+  {% if debug %}
+  <p class="gray">
+    MATCH: {{ result.match }}<br/>
+    QUERY: {{ result.query }}
+  </p>
+  {% endif %}
+
+  <table cellpadding="5">
+    {% for s in result.sentences %}
+    <tr valign="top">
+      {% if debug %}
+      <td class="gray">{{ s.id.split('-')[1] }}&nbsp;{{ "%.04f" % s.score }}</td>
+      {% endif %}
+      <td>{{ s.text | safe }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  
+  {% endfor %}
+
 </div>
 
 {% endfor %}

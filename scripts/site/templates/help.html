@@ -20,7 +20,7 @@ communication
 graph_coupling
 </pre>
 
-To search for particular index fields prefix the term with the field and
+To search for particular index field prefix the term with the field and
 separate field and term by a colon. Fields can be complex in that they refer to
 sub structure in a relation:
 
@@ -35,9 +35,15 @@ relation.arg1:communication
 Recognized fields are <code>author</code>, <code>technology</code>,
 <code>person</code>, <code>location</code>, <code>organization</code>,
 <code>event</code>, <code>relation.pred</code>, <code>relation.arg1</code>
-and <code>relation.arg2</code>.
+and <code>relation.arg2</code>. For all these fields there are abbreviations,
+the abbreviations are the first letter for the simple fields
+(<code>author</code> etcetera) and <code>pred</code>, <code>arg1</code>
+and <code>arg2</code> for the relation fields:
 
-<p/>
+<pre class="example">
+t:communication
+pred:connected
+</pre>
 
 You can create complex queries:
 

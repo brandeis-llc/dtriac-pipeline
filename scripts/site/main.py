@@ -3,13 +3,14 @@ from pprint import pformat
 
 from utils.elastic import Index, Source
 from utils.query import query
-from utils.misc import get_var, Statistics
+from utils.misc import get_var, Statistics, Kibana
 
 
-INDEX_DOC = Index('demo_documents')
-INDEX_SEN = Index('demo_sentences')
+INDEX_DOC = Index('demo_documents_479')
+INDEX_SEN = Index('demo_sentences_479')
 
 STATS_FILE = 'data/stats.json'
+STATS_FILE = 'data/stats-479.json'
 
 
 app = Flask(__name__)
@@ -18,7 +19,8 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     stats = Statistics(STATS_FILE)
-    return render_template("index.html", stats=stats)
+    kibana = Kibana()
+    return render_template("index.html", stats=stats, kibana=kibana)
 
 
 @app.route("/search", methods=['GET', 'POST'])

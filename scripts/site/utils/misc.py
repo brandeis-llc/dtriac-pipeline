@@ -38,13 +38,31 @@ class Statistics(object):
     def get_topic_data(self):
         """Return a list of the 10 most common topics with their counts. Returns a list
         of <topic, document_count> pairs."""
-        return Counter(self.topics).most_common(10)
+        return Counter(self.topics).most_common(40)
 
     def get_topics(self):
         return "[%s]" % ', '.join(["'%s'" % topic for (topic, count) in self.get_topic_data()])
 
     def get_topic_counts(self):
         return [count for (topic, count) in self.get_topic_data()]
+
+
+class Kibana(object):
+
+    KIBANA_LINK_GENERAL = 'data/kibana_link_general.txt'
+    KIBANA_LINK_TERM = 'data/kibana_link_term.txt'
+
+    def __init__(self):
+        self._general = open(Kibana.KIBANA_LINK_GENERAL).read().strip()
+        self._term = open(Kibana.KIBANA_LINK_TERM).read().strip()
+
+    def link(self):
+        return self._general
+
+    def term(self, term):
+        term = term.replace('_', '%20')
+        term = term.replace(' ', '%20')
+        return self._term.replace('FIELD', 'technology').replace('TERM', term)
 
 
 if __name__ == '__main__':

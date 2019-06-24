@@ -23,14 +23,12 @@ def write_statistics(directory, outfile):
     directory = sys.argv[1]
     fnames = glob.glob(os.path.join(directory, '*.json'))
     for fname in fnames:
-        #print(fname)
         json_object = json.load(codecs.open(fname))
         year = int(json_object.get('year', 9999))
-        if year == 9999:
-            continue
-        years[year] += 1
-        for topic in json_object.get('topic_element', []):
-            topics[topic] += 1
+        if year != 9999:
+            years[year] += 1
+            for topic in json_object.get('topic_element', []):
+                topics[topic] += 1
     json_object = { "years": years, "topics": topics }
     with codecs.open(outfile, 'w') as fh:
         fh.write(json.dumps(json_object, indent=True))
@@ -39,6 +37,5 @@ def write_statistics(directory, outfile):
 if __name__ == '__main__':
 
     directory = sys.argv[1]
-    outfile = sys.argv[2]
-    write_statistics(directory, outfile)
+    write_statistics(directory, 'stats.json')
 
