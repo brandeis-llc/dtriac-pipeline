@@ -52,9 +52,14 @@ class Kibana(object):
     KIBANA_LINK_GENERAL = 'data/kibana_link_general.txt'
     KIBANA_LINK_TERM = 'data/kibana_link_term.txt'
 
+    MORBIUS = 'morbius.cs-i.brandeis.edu'
+
     def __init__(self):
         self._general = open(Kibana.KIBANA_LINK_GENERAL).read().strip()
         self._term = open(Kibana.KIBANA_LINK_TERM).read().strip()
+        if len(os.uname().nodename) == 12:
+            self._general = self._general.replace(Kibana.MORBIUS, 'kibana')
+            self._term = self._term.replace(Kibana.MORBIUS, 'kibana')
 
     def link(self):
         return self._general

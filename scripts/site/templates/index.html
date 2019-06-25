@@ -1,17 +1,14 @@
 {% extends "layout.html" %}
 
-
 {% block head %}
 {{ super() }}
 <script src="{{ url_for('static', filename='js/Chart.js') }}"></script>
 <title>Index</title>
 {% endblock %}
 
-
 {% block header %}
 <h3 class="title">Networking Archive Search Page</h3>
 {% endblock %}
-
 
 {% block content %}
 
@@ -23,15 +20,6 @@
       </div>
     </td>
   </tr>
-  <!--
-  <tr>
-    <td>
-      <div class="bordered" style="width:400px;">
-	<canvas id="chart_topic_count"></canvas>
-      </div>
-    </td>
-  </tr>
-  -->
 </table>
 
 <script>
@@ -52,40 +40,13 @@ var myChart = new Chart(ctx, {
 });
 </script>
 
-<script>
-var ctx = document.getElementById('chart_topic_count');
-var myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels:  {{ stats.get_topics() | safe }},
-        datasets: [{
-	    label: 'document count',
-            data: {{ stats.get_topic_counts() }},
-	    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(55, 55, 55, 0.5)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-	scales: { yAxes: [ { ticks: { beginAtZero: false } } ] }
-    },
-});
-</script>
-
 <p/>
 <div class="bigger">
 <a href="/docs">List all documents</a>
 <p/>
 <a href="/search">Search documents</a></li>
 <p/>
-<a href="{{ kibana.link() }}">Kibana visualization</a>
-<!--
-<ul>
-  <li><a href="{{ kibana.term('epidemic models') }}">epidemic models</a></li>
-  <li><a href="{{ kibana.term('black_triangles') }}">black triangles</a></li>
-  <li><a href="{{ kibana.term('control%20objective') }}">control objective</a></li>
-</ul>
--->
+<a href="{{ kibana.link() }}" target="_blank">Kibana visualization</a>
 </div>
 
 {% endblock %}
