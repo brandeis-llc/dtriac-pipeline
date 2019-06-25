@@ -23,7 +23,7 @@ class Index(object):
 
     def get_documents(self):
         query = { "query": { "match_all": {} } }
-        return Result(result=self.es.search(index=self.index, body=query, size=100,
+        return Result(result=self.es.search(index=self.index, body=query, size=500,
                                             _source_includes=['docid', 'title', 'docname']))
 
     def get(self, doc_id):
@@ -61,6 +61,21 @@ class Result(object):
         except TypeError:
             # Elastic 6.4.2
             return self.result['hits']['total']
+
+    def is_tech_query(self):
+        bool = self.query_json['query']['bool']
+        if len(bool.keys()) == 1:
+            matches = list(bool.values())[0]
+            if len(matches) == 1:
+                pair = matches[0].get('match', matches[0].get('match_phrase'))
+                if 'technology' in pair:
+                    return pair['technology']
+        return False
+
+    def sorted_sources(self):
+        from operator import attrgetter
+        self.sources.sort(key = attrgetter('docid'))
+        return self.sources
 
     def write(self):
         fname = "%04d.txt" % nextint()

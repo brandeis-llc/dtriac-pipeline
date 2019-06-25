@@ -1,6 +1,5 @@
 {% extends "layout.html" %}
 
-{% set debug = False %}
 
 {% block head %}
 {{ super() }}
@@ -24,7 +23,7 @@
   Search:
   <input type="text" name="query" size="80"/>
   <input type="submit" value="Submit"/>
-  &nbsp;<a href="/help">help</a>
+  &nbsp; debug<input type="checkbox" name="debug" value="on"/>
 <form>
 
 <p/>
@@ -47,6 +46,12 @@
   </tr>
   {% endif %}
 </table>
+
+{% if visualize %}
+{% set tech = query.split(':')[1] %}
+{% set tech_link = kibana.term(tech) %}
+<p><a href={{ tech_link }} target="_blank">visualization</a></p>
+{% endif %}
 
 <p/>
 

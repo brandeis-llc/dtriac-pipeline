@@ -6,6 +6,9 @@ from utils.query import query
 from utils.misc import get_var, Statistics, Kibana
 
 
+INDEX_DOC = Index('demo_documents')
+INDEX_SEN = Index('demo_sentences')
+
 INDEX_DOC = Index('demo_documents_479')
 INDEX_SEN = Index('demo_sentences_479')
 
@@ -25,10 +28,13 @@ def index():
 
 @app.route("/search", methods=['GET', 'POST'])
 def search():
+    kibana = Kibana()
     search = get_var(request, "search")
     search_query = get_var(request, "query")
+    debug = get_var(request, "debug")
+    visualize = False if get_var(request, "visualize") is None else True
     app.logger.debug("query=%s" % search_query)
-    if search == "true" and query:
+    if search == "true" and search_query:
         q = query(search_query)
         app.logger.debug("query=%s" % q)
         result = INDEX_DOC.search(q)
@@ -36,14 +42,17 @@ def search():
         return render_template("search.html",
                                query=search_query,
                                result=result,
-                               sentence_index=INDEX_SEN)
+                               sentence_index=INDEX_SEN,
+                               visualize=visualize,
+                               kibana=kibana,
+                               debug=debug)
     return render_template("search.html")
 
 
 @app.route("/docs", methods=['GET', 'POST'])
 def docs():
     result = INDEX_DOC.get_documents()
-    return render_template('docs.html', sources=result.sources)
+    return render_template('docs.html', sources=result.sorted_sources())
 
 
 @app.route("/doc", methods=['GET', 'POST'])

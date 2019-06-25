@@ -43,7 +43,7 @@
       <td>&nbsp;&nbsp;</td>
       <td>
 	{% for tech in source.technologies() %}
-	<a href="/search?search=true&query=technology:{{tech.replace(' ', '_')}}">{{tech}}</a>,
+	<a href="/search?search=true&query=technology:{{tech.replace(' ', '_')}}&visualize=true">{{tech}}</a>,
 	{% endfor %}
       </td>
     </tr>
