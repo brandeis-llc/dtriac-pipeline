@@ -79,6 +79,14 @@ services:
       - '9201:9100'
     networks:
       - esnet
+  flask:
+    build:
+      context: ../scripts/site
+    container_name: flask
+    ports:
+      - '4000:4000'
+    networks:
+      - esnet
 
 networks:
   esnet:
