@@ -58,8 +58,8 @@ class Kibana(object):
         self._general = open(Kibana.KIBANA_LINK_GENERAL).read().strip()
         self._term = open(Kibana.KIBANA_LINK_TERM).read().strip()
         if len(os.uname().nodename) == 12:
-            self._general = self._general.replace(Kibana.MORBIUS, 'kibana')
-            self._term = self._term.replace(Kibana.MORBIUS, 'kibana')
+            self._general = self._general.replace(Kibana.MORBIUS, 'localhost')
+            self._term = self._term.replace(Kibana.MORBIUS, 'localhost')
 
     def link(self):
         return self._general
