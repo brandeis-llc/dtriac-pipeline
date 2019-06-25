@@ -7,7 +7,9 @@ so good.
 
 """
 
-import re, json
+import json
+import re
+import os
 from pprint import pprint
 from collections import Counter
 from operator import attrgetter
@@ -20,7 +22,11 @@ class Index(object):
 
     def __init__(self, index_name):
         self.index = index_name
-        self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+        if len(os.uname().nodename) == 12:
+            host = "elasticsearch"
+        else:
+            host = "localhost"
+        self.es = Elasticsearch([{'host': host, 'port': 9200}])
 
     def get_documents(self):
         query = { "query": { "match_all": {} } }
