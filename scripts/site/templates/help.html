@@ -60,6 +60,12 @@ AND location:Italy person:markov lives
 OR location:Italy person:markov lives
 </pre>
 
+At the moment it is not possible to mix an's and or's, and the following will
+not give the results you might expect.
+
+<pre class="example">
+(location:Italy AND (person:markov OR lives))
+</pre>
 
 <br/>
 <p><a href="/search">back to search</a></p>
