@@ -1,4 +1,6 @@
-.title { border-bottom: medium solid darkgreen; padding-bottom: 5px; }
+.navigation { font-size: 18px; }
+
+.title { border-bottom: medium solid darkgreen; padding-bottom: 5px; font-size: 24px; }
 
 .authors { border: thin solid darkblue; }
 
@@ -31,6 +33,8 @@ div.searchresult a:active { text-decoration: none; color: #00c; }
 .gray { color: gray; }
 
 .warn { color: red; }
+
+.searchbox { border: thin solid darkgray; padding: 5px; margin-top: 8px; }
 
 .searchresult { border: thin solid darkgray; padding: 5px; margin-top: 8px; }
 

@@ -14,17 +14,18 @@
 
 {% block content %}
 
+{# set debug = True #}
 {% if debug %}
 <p class="warn">Debugging mode...</p>
 {% endif %}
 
-<form class=searchboxaction="/search" method="post">
+<form class="searchbox" action="/search" method="post">
   <input type="hidden" name="search" value="true"/>
   Search:
   <input type="text" name="query" size="80"/>
   <input type="submit" value="Submit"/>
   &nbsp; debug<input type="checkbox" name="debug" value="on"/>
-<form>
+</form>
 
 <p/>
 
@@ -76,27 +77,21 @@
   </span>
   {% endif %}
 
-  {% for result in hit.sentence_groups(sentence_index).groups %}
-
-  {% if debug %}
-  <p class="gray">
-    MATCH: {{ result.match }}<br/>
-    QUERY: {{ result.query }}
-  </p>
-  {% endif %}
+  {% set hits_and_matches = hit.sentence_hits(sentence_index) %}
+  {% set hits = hits_and_matches[0] %}
+  {% set matches = hits_and_matches[1] %}
 
   <table cellpadding="5">
-    {% for s in result.sentences %}
-    <tr valign="top">
-      {% if debug %}
-      <td class="gray">{{ s.id.split('-')[1] }}&nbsp;{{ "%.04f" % s.score }}</td>
-      {% endif %}
-      <td>{{ s.text | safe }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  
+  {% for hit in hits %}
+  <tr valign="top">
+    {% if debug %}
+    <td class="gray">{{ hit.docid.split('-')[1] }}</td>
+    <td class="gray">{{ "%.4f" % hit.score }}</td>
+    {% endif %}
+    <td>{{ hit.as_highlighted_string(matches) | safe }}</td>
+  </tr>
   {% endfor %}
+  </table>
 
 </div>
 
