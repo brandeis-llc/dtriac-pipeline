@@ -1,6 +1,6 @@
 """elastic.py
 
-Module with some convenience code for acessing an ELastic Search index.
+Module with some convenience code for accessing an Elastic Search index.
 
 Based on the module with the same name at ../../elastic.py, which is clearly not
 so good.
@@ -10,6 +10,7 @@ so good.
 import re
 from pprint import pprint
 from collections import Counter
+from operator import attrgetter
 
 from elasticsearch import Elasticsearch 
 from elasticsearch.exceptions import NotFoundError
@@ -73,7 +74,6 @@ class Result(object):
         return False
 
     def sorted_sources(self):
-        from operator import attrgetter
         self.sources.sort(key = attrgetter('docid'))
         return self.sources
 
@@ -109,12 +109,35 @@ class Hit(object):
     def __str__(self):
         return "&lt;Hit %s>" % self.id
 
+    def as_highlighted_string(self, matches):
+        text = self.source.text
+        for match in matches:
+            text = re.sub(r'\b%s\b' % match, "<span class='term'>%s</span>" % match, text)
+        return text
+
     def sentence_groups(self, sentence_index):
         groups = SentenceGroups(self.source.docid, self.result.query_json)
         for match, query in groups.queries:
             result = sentence_index.search(query)
             groups.add_group(SentenceGroup(match, query, result))
         return groups
+
+    def sentence_hits(self, sentence_index):
+        groups = self.sentence_groups(sentence_index)
+        hits = []
+        matches = []
+        for group in groups.groups:
+            matches.extend(group.match.values())
+            hits.extend(group.result.hits)
+        ids2hits = {}
+        for hit in hits:
+            if hit.docid in ids2hits:
+                if hit.score < ids2hits[hit.docid].score:
+                    continue
+            ids2hits[hit.docid] = hit
+        hits = list(ids2hits.values())
+        hits = reversed(sorted(hits, key=attrgetter('score')))
+        return hits, matches
 
 
 class SentenceGroups(object):
@@ -176,6 +199,8 @@ class Sentence(object):
         self.highlight()
 
     def highlight(self):
+        # TODO: make this also take a list of strings
+        # NOTE: that was done in Hit and this method is now probably deprecated
         term = list(self.match.items())[0][1]
         searchterm = r'\b%s\b' % term
         matches = list(set(re.findall(searchterm, self.text, flags=re.I)))
