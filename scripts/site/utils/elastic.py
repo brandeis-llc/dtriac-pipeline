@@ -112,7 +112,10 @@ class Hit(object):
     def as_highlighted_string(self, matches):
         text = self.source.text
         for match in matches:
-            text = re.sub(r'\b%s\b' % match, "<span class='term'>%s</span>" % match, text)
+            text = re.sub(r'\b(%s)\b' % match,
+                          r"<span class='term'>\1</span>",
+                          text,
+                          flags=re.I)
         return text
 
     def sentence_groups(self, sentence_index):

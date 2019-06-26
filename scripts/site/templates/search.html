@@ -87,6 +87,7 @@
     {% if debug %}
     <td class="gray">{{ hit.docid.split('-')[1] }}</td>
     <td class="gray">{{ "%.4f" % hit.score }}</td>
+    <td class="gray">{{ matches }}</td>
     {% endif %}
     <td>{{ hit.as_highlighted_string(matches) | safe }}</td>
   </tr>

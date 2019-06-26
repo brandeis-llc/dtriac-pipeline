@@ -37,6 +37,8 @@ def split_spec(spec):
         field = expand(s[0])
         value = s[1].replace('_', ' ')
     match_type = "match_phrase" if ' '  in value else "match"
+    # TODO: using match_phrase might always be better
+    #match_type = "match_phrase"
     return { match_type: { field: value } }
 
 
