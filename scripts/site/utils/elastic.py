@@ -129,6 +129,7 @@ class Hit(object):
         groups = self.sentence_groups(sentence_index)
         hits = []
         matches = []
+        queries = groups.queries
         for group in groups.groups:
             matches.extend(group.match.values())
             hits.extend(group.result.hits)
@@ -139,8 +140,9 @@ class Hit(object):
                     continue
             ids2hits[hit.docid] = hit
         hits = list(ids2hits.values())
-        hits = reversed(sorted(hits, key=attrgetter('score')))
-        return hits, matches
+        hits = list(reversed(sorted(hits, key=attrgetter('score'))))
+        matches = list(set(matches))
+        return hits, matches, queries
 
 
 class SentenceGroups(object):
@@ -165,6 +167,8 @@ class SentenceGroups(object):
         bool = self.query['query']['bool']
         matches = bool.get('must', bool.get('should'))
         matches = [m.get('match', m.get('match_phrase')) for m in matches]
+        full_match_elements =  [ { 'match': { 'docid': self.docid } } ]
+        match_items = {}
         for match in matches:
             match_type = 'match_phrase' if ' ' in list(match.items())[0][1] else 'match'
             query = {
@@ -173,7 +177,18 @@ class SentenceGroups(object):
                         'must': [
                             { 'match': { 'docid': self.docid } },
                             { match_type: match} ] } } }
+            #raise Exception(match)
             self.queries.append((match, query))
+            full_match_elements.append({match_type: match})
+            for k, v in match.items():
+                match_items[k] = v
+        query = {
+            'query': {
+                'bool': {
+                    'must': full_match_elements }}}
+        #raise Exception(match_items)
+        if len(matches) > 1:
+            self.queries.append((match_items, query))
 
     def add_group(self, group):
         self.groups.append(group)

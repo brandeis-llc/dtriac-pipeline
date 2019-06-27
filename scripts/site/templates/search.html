@@ -24,7 +24,8 @@
   Search:
   <input type="text" name="query" size="80"/>
   <input type="submit" value="Submit"/>
-  &nbsp; debug<input type="checkbox" name="debug" value="on"/>
+  &nbsp; debug <input type="checkbox" name="debug" value="on"/>
+  &nbsp; max sentences per document <input type="text" name="sentences" value="5" size="2"/>
 </form>
 
 <p/>
@@ -68,6 +69,7 @@
     {{ hit.source.docname }}
     {% endif %}
   </a>
+  <span class="gray">({{ "%.4f" % hit.score }})</span>
 
   {% if debug %}
   <span class="gray">
@@ -77,19 +79,30 @@
   </span>
   {% endif %}
 
-  {% set hits_and_matches = hit.sentence_hits(sentence_index) %}
-  {% set hits = hits_and_matches[0] %}
-  {% set matches = hits_and_matches[1] %}
+  {% set hits_matches_and_queries = hit.sentence_hits(sentence_index) %}
+  {% set hits = hits_matches_and_queries[0][:sentences] %}
+  {% set matches = hits_matches_and_queries[1] %}
+  {% set queries = hits_matches_and_queries[2] %}
+
+  {# set dummy = app.logger.debug(matches) #}
+
+  {% if debug %}
+  <div>
+    {{ matches }}<br/>
+    {% for query in queries %}
+    {{ query[1] }}<br/>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <table cellpadding="5">
   {% for hit in hits %}
   <tr valign="top">
     {% if debug %}
     <td class="gray">{{ hit.docid.split('-')[1] }}</td>
-    <td class="gray">{{ "%.4f" % hit.score }}</td>
-    <td class="gray">{{ matches }}</td>
     {% endif %}
-    <td>{{ hit.as_highlighted_string(matches) | safe }}</td>
+    <td>{{ hit.as_highlighted_string(matches) | safe }}
+      <span class="gray">({{ "%.2f" % hit.score }})</span></td>
   </tr>
   {% endfor %}
   </table>
