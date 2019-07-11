@@ -32,20 +32,24 @@ def search():
     search = get_var(request, "search")
     search_query = get_var(request, "query")
     debug = get_var(request, "debug")
+    sentences = get_var(request, "sentences")
+    sentences = 5 if sentences is None else int(sentences)
     visualize = False if get_var(request, "visualize") is None else True
     app.logger.debug("query=%s" % search_query)
     if search == "true" and search_query:
         q = query(search_query)
         app.logger.debug("query=%s" % q)
         result = INDEX_DOC.search(q)
-        app.logger.debug("scroll=%s" % result.scroll_id)
+        # app.logger.debug("scroll=%s" % result.scroll_id)
         return render_template("search.html",
                                query=search_query,
                                result=result,
                                sentence_index=INDEX_SEN,
                                visualize=visualize,
                                kibana=kibana,
-                               debug=debug)
+                               debug=debug,
+                               sentences=sentences,
+                               app=app)
     return render_template("search.html")
 
 
