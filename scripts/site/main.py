@@ -6,14 +6,11 @@ from utils.query import query
 from utils.misc import get_var, Statistics, Kibana
 
 
-INDEX_DOC = Index('demo_documents')
-INDEX_SEN = Index('demo_sentences')
-
-INDEX_DOC = Index('demo_documents_479')
-INDEX_SEN = Index('demo_sentences_479')
+#INDEX_DOC = Index('demo_documents_479')
+INDEX_DOC = Index('demo_documents_025')
 
 STATS_FILE = 'data/stats.json'
-STATS_FILE = 'data/stats-479.json'
+#STATS_FILE = 'data/stats-479.json'
 
 
 app = Flask(__name__)
@@ -44,7 +41,6 @@ def search():
         return render_template("search.html",
                                query=search_query,
                                result=result,
-                               sentence_index=INDEX_SEN,
                                visualize=visualize,
                                kibana=kibana,
                                debug=debug,
@@ -74,3 +70,9 @@ def doc():
 @app.route("/help", methods=['GET'])
 def help():
     return render_template('help.html')
+
+
+
+if __name__ == '__main__':
+
+    app.run(host='0.0.0.0', debug=True)

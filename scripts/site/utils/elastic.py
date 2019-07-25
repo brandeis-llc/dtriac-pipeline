@@ -7,7 +7,7 @@ so good.
 
 """
 
-import re
+import re, json
 from pprint import pprint
 from collections import Counter
 from operator import attrgetter
@@ -109,123 +109,6 @@ class Hit(object):
     def __str__(self):
         return "&lt;Hit %s>" % self.id
 
-    def as_highlighted_string(self, matches):
-        text = self.source.text
-        for match in matches:
-            text = re.sub(r'\b(%s)\b' % match,
-                          r"<span class='term'>\1</span>",
-                          text,
-                          flags=re.I)
-        return text
-
-    def sentence_groups(self, sentence_index):
-        groups = SentenceGroups(self.source.docid, self.result.query_json)
-        for match, query in groups.queries:
-            result = sentence_index.search(query)
-            groups.add_group(SentenceGroup(match, query, result))
-        return groups
-
-    def sentence_hits(self, sentence_index):
-        groups = self.sentence_groups(sentence_index)
-        hits = []
-        matches = []
-        queries = groups.queries
-        for group in groups.groups:
-            matches.extend(group.match.values())
-            hits.extend(group.result.hits)
-        ids2hits = {}
-        for hit in hits:
-            if hit.docid in ids2hits:
-                if hit.score < ids2hits[hit.docid].score:
-                    continue
-            ids2hits[hit.docid] = hit
-        hits = list(ids2hits.values())
-        hits = list(reversed(sorted(hits, key=attrgetter('score'))))
-        matches = list(set(matches))
-        return hits, matches, queries
-
-
-class SentenceGroups(object):
-
-    """A SentenceGroups instance is defined by a document and the query that ran
-    over that document. """
-
-    def __init__(self, docid, query):
-        self.docid = docid
-        self.query = query
-        self.queries = []
-        self.groups = []
-        self.convert_query()
-        
-    def convert_query(self):
-        """Takes the query used for the document index and transforms it into a list of
-        queries for the sentences index. There will be a query for each element of
-        the original query, but it will be put into an AND with a query for the
-        docid."""
-        # TODO: one thing that goes a bit wrong is when you search on pred AND arg,
-        # in which case the AND link gets lost and will be replaced with an OR.
-        bool = self.query['query']['bool']
-        matches = bool.get('must', bool.get('should'))
-        matches = [m.get('match', m.get('match_phrase')) for m in matches]
-        full_match_elements =  [ { 'match': { 'docid': self.docid } } ]
-        match_items = {}
-        for match in matches:
-            match_type = 'match_phrase' if ' ' in list(match.items())[0][1] else 'match'
-            query = {
-                'query': {
-                    'bool': {
-                        'must': [
-                            { 'match': { 'docid': self.docid } },
-                            { match_type: match} ] } } }
-            #raise Exception(match)
-            self.queries.append((match, query))
-            full_match_elements.append({match_type: match})
-            for k, v in match.items():
-                match_items[k] = v
-        query = {
-            'query': {
-                'bool': {
-                    'must': full_match_elements }}}
-        #raise Exception(match_items)
-        if len(matches) > 1:
-            self.queries.append((match_items, query))
-
-    def add_group(self, group):
-        self.groups.append(group)
-
-
-class SentenceGroup(object):
-
-    """A SentenceGroup is defined by a query """
-
-    def __init__(self, match, query, result):
-        self.match = match
-        self.query = query
-        self.result = result
-        self.sentences = []
-        for hit in result.hits[:5]:
-            self.sentences.append(Sentence(self.match, hit))
-
-
-class Sentence(object):
-    
-    def __init__(self, match, hit):
-        self.match = match
-        self.id = hit.id
-        self.score = hit.score
-        self.text = hit.source.text
-        self.highlight()
-
-    def highlight(self):
-        # TODO: make this also take a list of strings
-        # NOTE: that was done in Hit and this method is now probably deprecated
-        term = list(self.match.items())[0][1]
-        searchterm = r'\b%s\b' % term
-        matches = list(set(re.findall(searchterm, self.text, flags=re.I)))
-        for match in matches:
-            self.text = re.sub(r'\b%s\b' % match, "<span class='term'>%s</span>" % match, self.text)
-
-
 
 class Source(object):
 
@@ -254,3 +137,68 @@ class Source(object):
     def technology_links(self):
         return ['<a href="/search?search=true&query=%s">%s</a>' % (tech, tech)
                 for tech in self.technologies()]
+
+    def source_size(self):
+        return len(self.text)
+
+    def show_fragments(self, query):
+        builder = Builder(self, query)
+        fragments = []
+        for match in builder.matches:
+            for offsets in match['offsets'].split():
+                p1, p2 = [int(p) for p in offsets.split('-')]
+                fragments.append('<' + self.text[p1-50:p2+50].strip() + '>')
+        return '\n' +'\n'.join(fragments)
+
+    def get_fragments(self, query):
+        builder = Builder(self, query)
+        #return builder.parsed_query
+        return builder.fragments
+
+
+class Builder(object):
+
+    def __init__(self, source, query):
+        self.source = source
+        self.query = query
+        self.parsed_query = self._parse_query()
+        self.matches = []
+        self.fragments = []
+        self._set_matches()
+        self._set_fragments()
+
+    def _parse_query(self):
+        result = []
+        for qe in self.query.split():
+            field_and_value = tuple(qe.split(':'))
+            if len(field_and_value) == 1:
+                result.append(('text', field_and_value[0]))
+            else:
+                result.append(field_and_value)
+        return result
+
+    def get_field(self, field):
+        return self.source.source.get(field)
+
+    def _set_matches(self):
+        """For each field-value pair in the query, check the source for the
+        field and see if the value appears in any of the field. For example, if
+        we have ('location', 'Italy') we check the list of dictionaries in the
+        'location' field of the source. Thos dictionaries ar eof the shape
+        {'text': ..., 'offsets': ...} and if we find that the value is included
+        in the 'text' field we add the dictionary to the self.matches list."""
+        for field, value in self.parsed_query:
+            if field == 'text':
+                pass
+            else:
+                for x in self.source.source.get(field, []):
+                    if value.lower() in x['text'].lower():
+                        self.matches.append(x)
+
+    def _set_fragments(self):
+        for match in self.matches:
+            for offsets in match['offsets'].split():
+                p1, p2 = [int(p) for p in offsets.split('-')]
+                self.fragments.append((self.source.text[p1-60:p1],
+                                       self.source.text[p1:p2],
+                                       self.source.text[p2:p2+60]))

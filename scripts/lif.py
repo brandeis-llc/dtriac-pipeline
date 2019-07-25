@@ -37,7 +37,7 @@ import codecs
 import json
 import subprocess
 
-from past.builtins import xrange
+#from past.builtins import xrange
 
 
 class LappsObject(object):
@@ -238,7 +238,8 @@ class Annotation(object):
     def __str__(self):
         s = "<{} {} {}-{} '{}'>".format(os.path.basename(self.type), self.id,
                                         self.start, self.end, self.text)
-        return s.encode('utf-8')
+        #return s.encode('utf-8')
+        return s
 
     def as_json(self):
         d = {"id": self.id, "@type": self.type, "features": self.features}

@@ -74,37 +74,33 @@
   {% if debug %}
   <span class="gray">
     <br/>
-    { docid={{ hit.source.docid }} score={{ hit.score }} } <br/>
+    { docid={{ hit.source.docid }}
+      docsize={{ hit.source.source_size() }}
+      score={{ hit.score }} } <br/>
     { {{ hit.source.docname }} }
   </span>
   {% endif %}
 
-  {% set hits_matches_and_queries = hit.sentence_hits(sentence_index) %}
-  {% set hits = hits_matches_and_queries[0][:sentences] %}
-  {% set matches = hits_matches_and_queries[1] %}
-  {% set queries = hits_matches_and_queries[2] %}
-
-  {# set dummy = app.logger.debug(matches) #}
-
   {% if debug %}
-  <div>
+  <div class="gray">
     {{ matches }}<br/>
     {% for query in queries %}
     {{ query[1] }}<br/>
     {% endfor %}
+    {# hit.source.show_fragments(query) #}
   </div>
   {% endif %}
 
-  <table cellpadding="5">
-  {% for hit in hits %}
-  <tr valign="top">
-    {% if debug %}
-    <td class="gray">{{ hit.docid.split('-')[1] }}</td>
-    {% endif %}
-    <td>{{ hit.as_highlighted_string(matches) | safe }}
-      <span class="gray">({{ "%.2f" % hit.score }})</span></td>
-  </tr>
-  {% endfor %}
+  <table cellpadding="0">
+    {% for fragment in hit.source.get_fragments(query) %}
+    <tr>
+      <td align="right">{{ fragment[0] }}</td>
+      <td></td>
+      <td><span class="keyterm">{{ fragment[1] }}</span></td>
+      <td></td>
+      <td>{{ fragment[2] }}</td>
+    </tr>
+    {% endfor %}
   </table>
 
 </div>
