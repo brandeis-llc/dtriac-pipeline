@@ -11,6 +11,13 @@ def get_var(request, var_name):
         return request.form.get(var_name)
 
 
+def as_integer(text):
+    try:
+        return int(text)
+    except ValueError:
+        return None
+
+
 class Statistics(object):
 
     def __init__(self, filename):

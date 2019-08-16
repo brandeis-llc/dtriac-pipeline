@@ -1,31 +1,30 @@
 {% extends "layout.html" %}
 
-
 {% block head %}
 {{ super() }}
 <title>Search</title>
 {% endblock %}
 
-
 {% block header %}
 <h3 class="title">Search</h3>
 {% endblock %}
 
-
 {% block content %}
-
 {# set debug = True #}
+{% set checked = "checked" if debug else "" %}
+
 {% if debug %}
-<p class="warn">Debugging mode...</p>
+<p class="warn">debugging mode</p>
 {% endif %}
 
 <form class="searchbox" action="/search" method="post">
   <input type="hidden" name="search" value="true"/>
   Search:
-  <input type="text" name="query" size="80"/>
+  <input type="text" name="query" size="80" value="{{query}}"/>
   <input type="submit" value="Submit"/>
-  &nbsp; debug <input type="checkbox" name="debug" value="on"/>
-  &nbsp; max sentences per document <input type="text" name="sentences" value="5" size="2"/>
+  &nbsp; debug <input type="checkbox" name="debug" {{checked}}/>
+  &nbsp; max sentences per document 
+  <input type="text" name="sentences" value="{{sentences}}" size="2"/>
 </form>
 
 <p/>
@@ -72,39 +71,25 @@
   <span class="gray">({{ "%.4f" % hit.score }})</span>
 
   {% if debug %}
+  {% set docid = "docid=%s" % hit.source.docid %}
+  {% set docsize = "docsize=%s" % hit.source.source_size() %}
+  {% set s = "{ %s %s }" % (docid, docsize) %}
   <span class="gray">
     <br/>
-    { docid={{ hit.source.docid }} score={{ hit.score }} } <br/>
-    { {{ hit.source.docname }} }
+    {{ s | safe }}
   </span>
   {% endif %}
 
-  {% set hits_matches_and_queries = hit.sentence_hits(sentence_index) %}
-  {% set hits = hits_matches_and_queries[0][:sentences] %}
-  {% set matches = hits_matches_and_queries[1] %}
-  {% set queries = hits_matches_and_queries[2] %}
-
-  {# set dummy = app.logger.debug(matches) #}
-
-  {% if debug %}
-  <div>
-    {{ matches }}<br/>
-    {% for query in queries %}
-    {{ query[1] }}<br/>
+  <table cellpadding="0">
+    {% for fragment in hit.source.get_fragments(query, sentences) %}
+    <tr>
+      <td align="right">{{ fragment[0] }}</td>
+      <td>
+	<span class="keyterm">{{ fragment[1] }}</span>
+	{{ fragment[2] }}
+      </td>
+    </tr>
     {% endfor %}
-  </div>
-  {% endif %}
-
-  <table cellpadding="5">
-  {% for hit in hits %}
-  <tr valign="top">
-    {% if debug %}
-    <td class="gray">{{ hit.docid.split('-')[1] }}</td>
-    {% endif %}
-    <td>{{ hit.as_highlighted_string(matches) | safe }}
-      <span class="gray">({{ "%.2f" % hit.score }})</span></td>
-  </tr>
-  {% endfor %}
   </table>
 
 </div>

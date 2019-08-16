@@ -16,16 +16,17 @@ TEX - Result of adding technologies to LIF
 TTK - Result of adding Tarsqi analysis to LIF
 SEN - Result of adding sentences types to LIF
 REL - Result of adding ReVerb analysis to LIF
-VNC - Result of adding ReVerb analysis to LIF
-TOP - Result of adding verbnet classes to LIF
+VNC - Result of adding verbnet classes to LIF
+TOP - Result of adding topics to LIF
 
 The ELA argument refers to the output directory.
 
-See create_index_docs.sh for an example invocation.
+See create_index_docs.sh for example invocations.
 
 """
 
 import os, sys, re, codecs, json, pickle, time, datetime
+import traceback
 from pprint import pformat
 from collections import Counter
 
@@ -35,39 +36,29 @@ from lif import LIF, Container, Annotation
 TECHNOLOGY_LIST = 'technologies.txt'
 
 
-
 def create_documents(lif, ner, tex, ttk, sen, rel, vnc, top, ela):
 
     """Read all the lif files generate for a document and create JSON files for
     documents, sections and sentences."""
 
     ontology = TechnologyOntology()
-
-    LIF_EXTENSION = '.pdf.lif'
-    NER_EXTENSION = '.pdf.lif'
-    SEN_EXTENSION = '.pdf.lif'
-    REL_EXTENSION = '.pdf.lif'
-    TEX_EXTENSION = '.lif'
-    TOP_EXTENSION = '.pdf.lif'
-    TTK_EXTENSION = '.pdf.lif'
-    VNC_EXTENSION = '.pdf.json.txt.lif'
-
-    fnames = [fname[:-len(LIF_EXTENSION)] for fname in os.listdir(lif)]
+    fnames = [fname for fname in os.listdir(lif)]
 
     for fname in sorted(fnames):
 
-        #if not fname.startswith('8_'): continue
+        #if not fname.startswith('16'): continue
+        #if fname.startswith('9'): break
+        #if fname.startswith('D'): break
 
         try:
-
-            lif_file = os.path.join(ner, fname + LIF_EXTENSION)
-            ner_file = os.path.join(ner, fname + NER_EXTENSION)
-            tex_file = os.path.join(tex, fname + TEX_EXTENSION)
-            ttk_file = os.path.join(ttk, fname + TTK_EXTENSION)
-            sen_file = os.path.join(sen, fname + SEN_EXTENSION)
-            rel_file = os.path.join(rel, fname + REL_EXTENSION)
-            vnc_file = os.path.join(vnc, fname + VNC_EXTENSION)
-            top_file = os.path.join(top, fname + TOP_EXTENSION)
+            lif_file = os.path.join(lif, fname)
+            ner_file = os.path.join(ner, fname)
+            tex_file = os.path.join(tex, fname)
+            ttk_file = os.path.join(ttk, fname)
+            sen_file = os.path.join(sen, fname)
+            rel_file = os.path.join(rel, fname)
+            vnc_file = os.path.join(vnc, fname)
+            top_file = os.path.join(top, fname)
 
             if not (os.path.exists(ner_file) and os.path.exists(tex_file)
                     and os.path.exists(ttk_file) and os.path.exists(sen_file)
@@ -81,15 +72,16 @@ def create_documents(lif, ner, tex, ttk, sen, rel, vnc, top, ela):
                            sen_file, rel_file,vnc_file, top_file, ontology)
             print("%04d  %s" % (doc.id, doc.fname))
             doc.write(os.path.join(ela, 'documents'))
-            sentences_dir = os.path.join(ela, 'sentences', "%04d" % doc.id)
-            if not os.path.exists(sentences_dir):
-                os.makedirs(sentences_dir)
-                #print("Creating directory %s\n" % sentences_dir)
-            for sentence in doc.get_sentences():
-                sentence.write(sentences_dir)
+            #sentences_dir = os.path.join(ela, 'sentences', "%04d" % doc.id)
+            #if not os.path.exists(sentences_dir):
+            #    os.makedirs(sentences_dir)
+            #for sentence in doc.get_sentences():
+            #    sentence.write(sentences_dir)
 
-        except:
-            print("ERROR on '%s'" % fname)
+        except Exception as e:
+            print("\nERROR on '%s'" % fname)
+            traceback.print_exc()
+            print('')
 
 
 class TechnologyOntology(object):
@@ -145,18 +137,26 @@ class Document(object):
 
     def _add_views(self, ner_file, tex_file, ttk_file, sen_file, rel_file,
                    vnc_file, top_file):
+        self._add_view("ner", ner_file, 1)
+        self._add_view("tex", tex_file, 1)
+        self._add_view("ttk", ttk_file, 1)
+        self._add_view("sen", sen_file, 0)
+        self._add_view("rel", rel_file, 1)
+        self._add_view("vnc", vnc_file, 0)
+        self._add_view("top", top_file, 0)
+
+    def _add_view(self, identifier, fname, view_id):
+        """Load fname as either a LIF object or a Container object and select
+        the specified view, indicated by an index in the view list. Add the
+        identifier to this view and add it to the list of views."""
         # Note that some files contain LIF objects and others contain Containers
         # with LIF embedded. The view we are looking for is the first or second,
         # depending on how the processor for those data was set up.
-        self._add_view("ner", Container(ner_file).payload.views[1])
-        self._add_view("tex", Container(tex_file).payload.views[1])
-        self._add_view("ttk", LIF(ttk_file).views[1])
-        self._add_view("sen", LIF(sen_file).views[0])
-        self._add_view("rel", Container(rel_file).payload.views[1])
-        self._add_view("vnc", Container(vnc_file).payload.views[0])
-        self._add_view("top", LIF(top_file).views[0])
-
-    def _add_view(self, identifier, view):
+        try:
+            view = Container(fname).payload.views[view_id]
+        except KeyError:
+            # this happens when we try to get a discriminator attribute from a LIF object
+            view = LIF(fname).views[view_id]
         view.id = identifier
         self.lif.views.append(view)
 
@@ -271,6 +271,7 @@ class Document(object):
         self.annotations.times.finish()
 
     def _collect_verbnet_classes(self):
+        # TODO: something goes rather wrong here
         view = self.get_view("vnc")
         if view is None:
             return
@@ -335,25 +336,22 @@ class Document(object):
         less than # 0.01 seconds for 100 technology terms, so we can live with
         this."""
         technologies = self.annotations.technologies
-        next_id = max([int(a.id[1:]) for a in technologies.annotations]) + 1
-        #print len(technologies.texts), len(technologies.annotations)
-        for term in self.ontology.technologies:
-            searchterm = r'\b%s\b' % term
-            matches = list(re.finditer(searchterm, self.annotations.text, flags=re.I))
-            for match in matches:
-                json_obj = { "id": "t%d" % next_id,
-                             "@type": 'http://vocab.lappsgrid.org/Technology',
-                             "start": match.start(), "end": match.end() }
-                next_id += 1
-                anno = Annotation(json_obj)
-                anno.text = term
-                technologies.add(anno)
-        vnc_view = self.get_view("vnc")
-        for vnc_anno in vnc_view.annotations:
-            if vnc_anno.start > relation.pred.start \
-                    and vnc_anno.end < relation.pred.end\
-                    and vnc_anno.features["tags"][0] != "None":
-                relation.vnc = vnc_anno.features["tags"]
+        if technologies:
+            next_id = max([int(a.id[1:]) for a in technologies.annotations]) + 1
+            # print len(technologies.texts), len(technologies.annotations)
+            for term in self.ontology.technologies:
+                searchterm = r'\b%s\b' % term
+                matches = list(re.finditer(searchterm,
+                                           self.annotations.text,
+                                           flags=re.I))
+                for match in matches:
+                    json_obj = { "id": "t%d" % next_id,
+                                 "@type": 'http://vocab.lappsgrid.org/Technology',
+                                 "start": match.start(), "end": match.end() }
+                    next_id += 1
+                    anno = Annotation(json_obj)
+                    anno.text = term
+                    technologies.add(anno)
 
     def get_sentences(self):
         # take the sentences view, it has the sentences copied from the ttk
@@ -398,7 +396,7 @@ class Relation(object):
         self.vnc = None
 
     def __str__(self):
-        return "<Relation %d-%d %s vnc=%s>" \
+        return "<Relation %d-%d '%s' vnc=%s>" \
             % (self.start, self.end, self.pred_text.replace("\n", ' '), self.vnc)
 
     def is_acceptable(self):
@@ -543,12 +541,12 @@ class Annotations(object):
             "topic": self.topics,
             "topic_element": self.topic_elements,
             "abstract": abstract,
-            "technology": self.technologies.get_text_strings(),
-            "person": self.persons.get_text_strings(),
-            "location": self.locations.get_text_strings(),
-            "organization": self.organizations.get_text_strings(),
-            "event": self.events.get_text_strings(),
-            "time": self.times.get_text_strings(),
+            "technology": self.technologies.get_condensed_annotations(),
+            "person": self.persons.get_condensed_annotations(),
+            "location": self.locations.get_condensed_annotations(),
+            "organization": self.organizations.get_condensed_annotations(),
+            "event": self.events.get_condensed_annotations(),
+            "time": self.times.get_condensed_annotations(),
             "relation": [self.relation_dict(r) for r in self.relations] }
         with codecs.open(fname, 'w', encoding='utf8') as fh:
             fh.write(json.dumps(json_object, sort_keys=True, indent=4))
@@ -557,12 +555,12 @@ class Annotations(object):
         """Writes the sentence document with the search fields to a json file."""
         json_object = { "text": self.text, "docid": self.docid }
         for (field, value) in [
-                ("technology", self.technologies.get_text_strings()),
-                ("person", self.persons.get_text_strings()),
-                ("location", self.locations.get_text_strings()),
-                ("organization", self.organizations.get_text_strings()),
-                ("event", self.events.get_text_strings()),
-                ("time", self.times.get_text_strings()),
+                ("technology", self.technologies.get_condensed_annotations()),
+                ("person", self.persons.get_condensed_annotations()),
+                ("location", self.locations.get_condensed_annotations()),
+                ("organization", self.organizations.get_condensed_annotations()),
+                ("event", self.events.get_condensed_annotations()),
+                ("time", self.times.get_condensed_annotations()),
                 ("relation", [self.relation_dict(r) for r in self.relations])]:
             _add_value(json_object, field, value)
         with codecs.open(fname, 'w', encoding='utf8') as fh:
@@ -599,10 +597,14 @@ class Annotations(object):
             pickle.dump(json_object, fh)
 
     def relation_dict(self, relation):
-        return { "pred": relation.pred_text,
-                 #"vnc": relation.vnc,
-                 "arg1": relation.arg1_text,
-                 "arg2": relation.arg2_text }
+        return {
+            "pred": relation.pred_text,
+            "vnc": relation.vnc,
+            "arg1": relation.arg1_text,
+            "arg2": relation.arg2_text,
+            "pred_offsets": "%s-%s" % (relation.pred.start, relation.pred.end),
+            "arg1_offsets": "%s-%s" % (relation.arg1.start, relation.arg1.end),
+            "arg2_offsets": "%s-%s" % (relation.arg2.start, relation.arg2.end) }
 
     def pp(self, indent=''):
         print("%s%s\n" % (indent, self))
@@ -611,7 +613,7 @@ class Annotations(object):
 class IndexedAnnotations(object):
 
     """An index of all annotation in a file for a particular type (like "person" or
-    "technology). Keeps the lize, the list of annotations, a set of text strings
+    "technology). Keeps the size, the list of annotations, a set of text strings
     and a couple of dictionaries."""
 
     def __init__(self, doc, annotation_type):
@@ -657,6 +659,21 @@ class IndexedAnnotations(object):
 
     def get_text_strings(self):
         return sorted(self.texts)
+
+    def get_condensed_annotations(self):
+        """Returns a list of dictionaries where each dictionary has two keys:
+        'text' and 'offsets', the latter is string with start-end pairs like
+        "1641-1649 4786-4794"."""
+        annos = {}
+        for anno in self.annotations:
+            offsets = "%s-%s" % (anno.start, anno.end)
+            annos.setdefault(anno.text, []).append({"text": anno.text, "offsets": offsets})
+        answer = []
+        for anno in annos:
+            instances = annos[anno]
+            offsets = ' '.join([inst['offsets'] for inst in instances])
+            answer.append({"text": anno, "offsets": offsets})
+        return answer
 
     def get_index(self):
         return self.idx_p1_p2_id

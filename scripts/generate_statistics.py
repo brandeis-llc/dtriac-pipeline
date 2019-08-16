@@ -13,6 +13,9 @@ create_index_docs.py.
 
 """
 
+# TODO: needs to be updated for the new format for the index
+
+
 import os, sys, glob, json, codecs
 from collections import Counter
 

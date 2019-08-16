@@ -1,6 +1,6 @@
 """elastic.py
 
-Module with some convenience code for acessing an ELastic Search index.
+Module with some convenience code for acessing an Elastic Search index.
 
 """
 

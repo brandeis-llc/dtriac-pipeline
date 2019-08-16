@@ -1,8 +1,6 @@
 """query.py
 
-Example queries for the elastic search demo index.
-
-Mostly copied from ../../query_index.py.py (bad design, must be changed).
+Mostly copied from ../../query_index.py (bad design, must be changed).
 
 """
 
@@ -10,12 +8,14 @@ import sys
 import codecs
 import json
 
-# there is a better way I thought, but no time to find it now
-if sys.version_info.major == 2:
+if __name__ == '__main__':
     from elastic import Index
 else:
-    from utils.elastic import Index
-
+    # there is a better way I thought, but no time to find it now
+    if sys.version_info.major == 2:
+        from elastic import Index
+    else:
+        from utils.elastic import Index
 
 
 field_abbreviations = {
@@ -35,9 +35,11 @@ def split_spec(spec):
         value = spec.replace('_', ' ')
     else:
         field = expand(s[0])
+        if field != 'text':
+            field = field + '.text'
         value = s[1].replace('_', ' ')
     match_type = "match_phrase" if ' '  in value else "match"
-    # TODO: using match_phrase might always be better
+     # TODO: using match_phrase might always be better
     #match_type = "match_phrase"
     return { match_type: { field: value } }
 
@@ -63,7 +65,7 @@ def query_or(specs):
 def query_bool(query_type, specs):
     matches = [ split_spec(spec) for spec in specs ]
     return { "query": { "bool": { query_type: matches } } }
-    
+
 
 queries = [
     ["(event:acquisition)", query("event:acquisition")],
@@ -98,9 +100,9 @@ def test_query(idx, q):
 
 if __name__ == '__main__':
 
-    idx = Index('demo_documents')
+    idx = Index('demo_documents_025')
 
-    if False:
+    if True:
         test_queries(idx)
 
     if False:
@@ -110,7 +112,9 @@ if __name__ == '__main__':
             test_query(idx, q)
 
     if True:
-        print(query("organization:National_Science_Foundation"))
-        print(query("OR door organization:National_Science_Foundation"))
-        print(query("AND location:Italy organization:National_Science_Foundation"))
-        print(query("technology:graph_coupling"))
+        for q in ("organization:National_Science_Foundation",
+                  "OR door organization:National_Science_Foundation",
+                  "AND location:Italy organization:National_Science_Foundation",
+                  "technology:graph_coupling"):
+            print(q)
+            print(json.dumps(query(q), indent=4))
