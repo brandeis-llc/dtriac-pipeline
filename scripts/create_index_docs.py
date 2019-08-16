@@ -348,6 +348,12 @@ class Document(object):
                 anno = Annotation(json_obj)
                 anno.text = term
                 technologies.add(anno)
+        vnc_view = self.get_view("vnc")
+        for vnc_anno in vnc_view.annotations:
+            if vnc_anno.start > relation.pred.start \
+                    and vnc_anno.end < relation.pred.end\
+                    and vnc_anno.features["tags"][0] != "None":
+                relation.vnc = vnc_anno.features["tags"]
 
     def get_sentences(self):
         # take the sentences view, it has the sentences copied from the ttk

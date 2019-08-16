@@ -41,7 +41,7 @@ def generate_lif(txt, vnc):
                 "lemma": olemma, "text": raw_text[s:e]}
         ann_obj = Annotation(ann)
         vnc_view.annotations.append(ann_obj)
-    lif_obj.write()
+    cont_obj.write()
 
 
 
