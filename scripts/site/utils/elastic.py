@@ -150,17 +150,18 @@ class Source(object):
                 fragments.append('<' + self.text[p1-50:p2+50].strip() + '>')
         return '\n' +'\n'.join(fragments)
 
-    def get_fragments(self, query):
-        builder = Builder(self, query)
+    def get_fragments(self, query, sentences):
+        builder = Builder(self, query, sentences)
         #return builder.parsed_query
         return builder.fragments
 
 
 class Builder(object):
 
-    def __init__(self, source, query):
+    def __init__(self, source, query, sentences):
         self.source = source
         self.query = query
+        self.sentences = sentences
         self.parsed_query = self._parse_query()
         self.matches = []
         self.fragments = []
@@ -170,6 +171,8 @@ class Builder(object):
     def _parse_query(self):
         result = []
         for qe in self.query.split():
+            if qe in ('AND', 'OR'):
+                continue
             field_and_value = tuple(qe.split(':'))
             if len(field_and_value) == 1:
                 result.append(('text', field_and_value[0]))
@@ -189,16 +192,35 @@ class Builder(object):
         in the 'text' field we add the dictionary to the self.matches list."""
         for field, value in self.parsed_query:
             if field == 'text':
-                pass
+                search_pattern = r'\b%s\b' % value.replace('_', ' ')
+                matches = re.finditer(search_pattern, self.source.text,
+                                      re.IGNORECASE)
+                for match in matches:
+                    self.matches.append(match)
             else:
                 for x in self.source.source.get(field, []):
-                    if value.lower() in x['text'].lower():
+                    if value.lower().replace('_', ' ') in x['text'].lower():
                         self.matches.append(x)
 
     def _set_fragments(self):
+        fragments_added = 0
         for match in self.matches:
-            for offsets in match['offsets'].split():
-                p1, p2 = [int(p) for p in offsets.split('-')]
-                self.fragments.append((self.source.text[p1-60:p1],
-                                       self.source.text[p1:p2],
-                                       self.source.text[p2:p2+60]))
+            if fragments_added >= self.sentences:
+                break
+            try:
+                for offsets in match['offsets'].split():
+                    p1, p2 = [int(p) for p in offsets.split('-')]
+                    self._add_fragment(p1, p2)
+                    fragments_added += 1
+            except TypeError:
+                p1 = match.start()
+                p2 = match.end()
+                self._add_fragment(p1, p2)
+                fragments_added += 1
+
+    def _add_fragment(self, p1, p2):
+        context = 60
+        match = self.source.text[p1:p2]
+        left_context = self.source.text[p1-context:p1]
+        right_context = self.source.text[p2:p2+context]
+        self.fragments.append((left_context, match, right_context))

@@ -3,7 +3,7 @@ from pprint import pformat
 
 from utils.elastic import Index, Source
 from utils.query import query
-from utils.misc import get_var, Statistics, Kibana
+from utils.misc import get_var, as_integer, Statistics, Kibana
 
 
 #INDEX_DOC = Index('demo_documents_479')
@@ -29,8 +29,8 @@ def search():
     search = get_var(request, "search")
     search_query = get_var(request, "query")
     debug = get_var(request, "debug")
-    sentences = get_var(request, "sentences")
-    sentences = 5 if sentences is None else int(sentences)
+    sentences = as_integer(get_var(request, "sentences"))
+    sentences = 5 if sentences is None else sentences
     visualize = False if get_var(request, "visualize") is None else True
     app.logger.debug("query=%s" % search_query)
     if search == "true" and search_query:
