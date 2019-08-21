@@ -1,8 +1,13 @@
 #! /bin/bash 
 
 # prepare tools
-## science-parser (v1) as a container
 spv1_container=$(docker ps --format '{{.Image}}\t{{.Names}}\t{{.Ports}}' | grep -E ^allenai\/scienceparse:2.0.3)
+corenlp_jar=$(pwd)/brandeis-stanfordnlp-service/corenlp-cli#2.2.0-jar-with-dependencies.jar
+reverb_jar=$(pwd)/brandeis-reverb-service/reverb-cli#1.1.0-jar-with-dependencies.jar
+clearwsd_jar=$(pwd)/clearwsd/clearwsd-cli-0.10-SNAPSHOT.jar
+clearwsd_model=$(pwd)/clearwsd/clearwsd-models/src/main/resources/models/nlp4j-verbnet-3.3.bin
+
+## science-parser (v1) as a container
 if [ -n "$spv1_container" ]; then 
     spv1_container_name=$(echo "$spv1_container" | cut -f 2)
     spv1_container_port=$(echo "$spv1_container" | cut -f 3  | cut -d - -f 1 | cut -d : -f 2)
@@ -16,8 +21,8 @@ else
     done
 fi
 ## corenlp (Brandeis lapps version)
-corenlp_jar=$(pwd)/brandeis-stanfordnlp-service/corenlp-cli#2.2.0-jar-with-dependencies.jar
 if [ ! -f ${corenlp_jar} ]; then 
+    rm -rf $(pwd)/brandeis-stanfordnlp-service
     git clone --branch v2.2.0 https://github.com/lappsgrid-services/brandeis-stanfordnlp-service.git
     cd brandeis-stanfordnlp-service
     mvn -DskipTests -Pcli package &
@@ -27,22 +32,21 @@ fi
 ### will create a subdir "ner-TIMESTAMP" in the input dir
 ### and generated NER lifs share the same names with input file
 ## reverb (Brandeis lapps version)
-reverb_jar=$(pwd)/brandeis-reverb-service/reverb-cli#1.1.0-jar-with-dependencies.jar
 if [ ! -f ${reverb_jar} ]; then 
+    rm -rf $(pwd)/brandeis-reverb-service
     git clone --branch v1.1.0 https://github.com/lappsgrid-services/brandeis-reverb-service.git
     cd brandeis-reverb-service
     mvn -DskipTests -Pcli package &
     cd ..
 fi
 ## clearwsd (Keigh's fork)
-clearwsd_jar=$(pwd)/clearwsd/reverb-cli#1.1.0-jar-with-dependencies.jar
 if [ ! -f ${clearwsd_jar} ]; then 
+    rm -rf $(pwd)/clearwsd
     git clone --branch develop https://github.com/keighrim/clearwsd.git
     cd clearwsd
     mvn package -DskipTests -P build-nlp4j-cli & 
     cd ..
 fi 
-clearwsd_model=$(pwd)/clearwsd/clearwsd-models/src/main/resources/models/nlp4j-verbnet-3.3.bin
 ### example command: java -jar clearwsd-cli-0.10-SNAPSHOT.jar -model clearwsd-models/src/main/resources/models/nlp4j-verbnet-3.3.bin  -input "$f" -output "output/$(basename "$f")" --anchor
 ## technology extraction
 ## Tarsqi 
@@ -88,10 +92,26 @@ for json in $(pwd)/${spv1_jsons}/*.json ; do
 done
 
 # 3. now run corenlp NER
+rm -rf ${raw_lifs}/ner-*
+java -jar ${corenlp_jar} ner ${raw_lifs} && mv ${raw_lifs}/ner-*/*.lif ${ner_lifs} && rm -rf ${raw_lifs}/ner-* &
 # 4. as well as technology extraction 
 # 5. next tarsqi
 # 6. and crap sentence classification 
 # 7. reverb
+rm -rf ${raw_lifs}/rel-*
+java -jar ${reverb_jar} ${raw_lifs} && mv ${raw_lifs}/rel-*/*.lif ${reverb_lifs} && rm -rf ${raw_lifs}/rel-* &
 # 8. and clearwsd
+rm -rf ${raw_texts}/clearwsd
+mkdir -p ${raw_texts}/clearwsd
+for t in ${raw_texts}/*.txt; do 
+    txt=$(basename $t)
+    (java -jar ${clearwsd_jar} -model ${clearwsd_model}  -input "${raw_texts}/$txt" -output "${raw_texts}/clearwsd/$txt" --anchor 
+    python ./scripts/vnc_to_lif.py "${raw_texts}/$txt" "${raw_texts}/clearwsd/$txt" > "${verbnet_tags}/$txt".lif 
+    rm ${raw_texts}/clearwsd/${txt}
+    rm ${raw_texts}/${txt}.dep
+    ) &
+done
 # 9. and finally gensim 
 
+
+docker stop ${spv1_container_name} && docker rm ${spv1_container_name}
