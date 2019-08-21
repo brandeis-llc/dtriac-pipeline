@@ -114,4 +114,5 @@ done
 # 9. and finally gensim 
 
 
+wait
 docker stop ${spv1_container_name} && docker rm ${spv1_container_name}
