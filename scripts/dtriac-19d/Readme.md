@@ -25,3 +25,28 @@ $ python3 create_lif -s /data/dtriac/dtriac-19d/all \
 This will process all document (since 99999 is bigger than the total number) and write results to `/data/dtriac/dtriac-19d/all-processed`.
 
 Note that this imports some code that intends to run on both Python2 and Python 3 and that includes calls to the `past` package so you may need to install that with `pip3 install future`.
+
+
+## Running the topic model
+
+You need to install `gensim` and `nltk` and for the latter you need to load a few resources:
+
+```python
+>>> nltk.download('stopwords')
+>>> nltk.download('punk')
+>>> nltk.download('wordnet')
+```
+
+Building the model:
+
+```bash
+$ python3 generate_topics.py --build -d DATA_DIR -f FILELIST -e 100
+```
+
+This needs to be done only once. The model itself is saved in `topics/` and will be loaded as needed.
+
+Running the model on LIF files:
+
+```bash
+$ python3 generate_topics.py -d DATA_DIR -f FILELIST -e 16000
+```

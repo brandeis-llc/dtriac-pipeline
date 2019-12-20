@@ -48,6 +48,7 @@ def process_list_element(source_dir, data_dir, fname, test=False):
 
 def create_lif_file(src_file, lif_file, test=False):
     page_separator = '\n\n%s\n\n' % ('='*80)
+    page_separator = ''
     with open(src_file, encoding='utf8') as fh_in, \
          open(lif_file, 'w', encoding='utf8') as fh_out:
         lif_obj = LIF()
