@@ -27,7 +27,7 @@ from nltk import word_tokenize
 from nltk.corpus import wordnet as wn
 
 from lif import Container, LIF, View, Annotation
-from utils import elements, ensure_directory, time_elapsed
+from utils import elements, ensure_directory, time_elapsed, print_element
 
 
 TOPICS_DIR = "topics"
@@ -64,7 +64,7 @@ def _collect_data(data_dir, filelist, start, end):
     # especially the first two occur  in most abstracts so let's ignore them
     words_to_ignore = {'title', 'abstract', 'result', 'study'}
     for n, fname in elements(filelist, start, end):
-        print("    %07d  %s" % (n, fname))
+        print("%07d  %s" % (n, fname))
         fpath = os.path.join(data_dir, 'lif', fname[:-4] + '.lif')
         lif = Container(fpath).payload
         text_data = prepare_text_for_lda(lif.text.value)
@@ -94,12 +94,13 @@ def load_dictionary():
 
 @time_elapsed
 def generate_topics(data_dir, filelist, start, end, crash=False):
+    print("$ python3 %s\n" % ' '.join(sys.argv))
     lda = load_model()
     topic_idx = {topic_id: topic for topic_id, topic
                  in lda.print_topics(num_topics=NUM_TOPICS)}
     dictionary = load_dictionary()
     for n, fname in elements(filelist, start, end):
-        print("%07d  %s" % (n, fname))
+        print_element(n, fname)
         if crash:
             generate_topics_for_file(data_dir, fname, lda, topic_idx, dictionary)
         else:
