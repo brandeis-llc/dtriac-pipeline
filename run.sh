@@ -55,27 +55,28 @@ fi
 wait
 
 pdf_loc=$1
-spv1_jsons="1-spv1-results"
-raw_lifs="2-1-raw-lif"
-raw_texts="2-2-raw-text"
-ner_lifs="3-ner"
+out_loc=$2
+spv1_jsons="$2/1-spv1-results"
+raw_lifs="$2/2-1-raw-lif"
+raw_texts="$2/2-2-raw-text"
+ner_lifs="$2/3-ner"
 # 4. as well as technology extraction 
-tex_lifs="4-tex"
+tex_lifs="$2/4-tex"
 # 5. next tarsqi
-tarsqi_lifs="5-ttk"
+tarsqi_lifs="$2/5-ttk"
 # 6. and crap sentence classification 
-sentence_cls="6-sen"
+sentence_cls="$2/6-sen"
 # 7. reverb
-reverb_lifs="7-rel"
+reverb_lifs="$2/7-rel"
 # 8. and clearwsd
-verbnet_tags="8-vnc"
+verbnet_tags="$2/8-vnc"
 # 9. and finally gensim 
-topic_models="9-top"
-elastic_jsons="es-index"
+topic_models="$2/9-top"
+elastic_jsons="$2/es-index"
 
 for dir in {$spv1_jsons,$raw_lifs,$raw_texts,$ner_lifs,$tex_lifs,$tarsqi_lifs,$sentence_cls,$reverb_lifs,$verbnet_tags,$topic_models,$elastic_jsons}; do 
-    if [ ! -d $(pwd)/${dir} ] ; then 
-        mkdir $(pwd)/${dir}
+    if [ ! -d ${dir} ] ; then 
+        mkdir -p ${dir}
     fi
 done
 
@@ -83,11 +84,11 @@ echo $spv1_container_port
 
 # 1. first extract text and basic metadata using spv1
 for pdf in "$pdf_loc"/*.pdf; do 
-    curl -v -H "Content-type: application/pdf" --data-binary @"${pdf}" http://localhost:${spv1_container_port}/v1 > $(pwd)/${spv1_jsons}/"$(basename ${pdf})".json
+    curl -v -H "Content-type: application/pdf" --data-binary @"${pdf}" http://localhost:${spv1_container_port}/v1 > ${spv1_jsons}/"$(basename ${pdf})".json
 done
 # 2. then convert spv1 json to LIF
 
-for json in $(pwd)/${spv1_jsons}/*.json ; do 
+for json in ${spv1_jsons}/*.json ; do 
     python $(pwd)/scripts/create_lif.py ${spv1_jsons} ${raw_lifs} ${raw_texts}
 done
 
