@@ -18,8 +18,28 @@ import getopt
 import json
 from io import StringIO
 
+#from nltk.corpus import words
+#from nltk import word_tokenize
+#from nltk.stem import WordNetLemmatizer
+
 from lif import LIF, Container, View, Annotation
 from utils import time_elapsed, elements, ensure_directory, print_element
+
+
+HEADER_FILE = open("list-headers.txt", 'w')
+FOOTER_FILE = open("list-footers.txt", 'w')
+
+VARIOUS_FOOTERS = { 'UNCLASSIFIED', 'NO. OF COPIES' }
+
+PAGE_NUMBERS = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+                 '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'}
+
+ROMAN_NUMERALS = {'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x',
+                  'xi', 'xii', 'xii', 'xiv', 'xv', 'xvi', 'xvii', 'xvii', 'xix', 'xx'}
+
+# WORDS = set(words.words())
+# LEMMATIZER = WordNetLemmatizer()
+# MINIMUM_RATIO_OF_KNOWN_WORDS = 0.49
 
 
 @time_elapsed
@@ -47,52 +67,124 @@ def process_list_element(source_dir, data_dir, fname, test=False):
 
 
 def create_lif_file(src_file, lif_file, test=False):
-    page_separator = '\n\n%s\n\n' % ('='*80)
-    page_separator = ''
+    HEADER_FILE.write("\n%s\n\n" % src_file)
+    FOOTER_FILE.write("\n%s\n\n" % src_file)
     with open(src_file, encoding='utf8') as fh_in, \
          open(lif_file, 'w', encoding='utf8') as fh_out:
         lif_obj = LIF()
-        _add_view(lif_obj)
-        annotations = lif_obj.views[0].annotations
+        page_view = create_page_view()
+        lif_obj.views.append(page_view)
         text = StringIO()
-        page_start = 0
-        page_end = 0
         offset = 0
+        page = Page(offset)
         for line in fh_in:
             if line.startswith(u"\U0001F4C3"):
-                page_number = line.strip().strip(u"\U0001F4C3").strip()
-                #print(line.strip(), '  -- ', page_number, page_start, page_end)
-                offset += text.write(page_separator)
-                _add_annotation(annotations, 'Section', page_number, page_start, page_end)
-                page_start = offset
-                page_end = offset
+                page.parse(line)
+                offset = page.end
+                text.write(page.text)
+                page_view.annotations.append(page.as_annotation())
+                page = Page(offset)
             else:
-                sent_len = text.write(line)
-                page_end += sent_len
-                offset += sent_len
+                page.add(line)
         lif_obj.text.value = text.getvalue()
-        container = Container()
-        container.discriminator = "http://vocab.lappsgrid.org/ns/media/jsonld#lif"
-        container.payload = lif_obj
+        container = create_container(lif_obj)
         fh_out.write(json.dumps(container.as_json(), indent=4))
     if test:
         test_lif_file(lif_file)
 
 
-def _add_view(lif_obj):
+def create_container(lif_object):
+    container = Container()
+    container.discriminator = "http://vocab.lappsgrid.org/ns/media/jsonld#lif"
+    container.payload = lif_object
+    return container
+
+
+def create_page_view():
     view = View()
-    lif_obj.views.append(view)
-    view.id = "structure"
-    view.metadata['contains'] = { vocab("Section"): {} }
+    view.id = "pages"
+    view.metadata['contains'] = { vocab("Page"): {} }
+    return view
 
 
-def _add_annotation(annotations, annotation_type, page_number, start, end):
-    anno = {
-        "id": "p%s" % page_number,
-        "@type": vocab('Section'),
-        "start": start,
-        "end": end }
-    annotations.append(Annotation(anno))
+class Page(object):
+
+    def __init__(self, offset):
+        self.start = offset
+        self.end = None
+        self.buffer = StringIO()
+        self.number = None
+        self.text = None
+        self.header = None
+        self.footer = None
+
+    @staticmethod
+    def is_header(text):
+        if text.lower().startswith('unclass'):
+            return True
+        if (text.strip('- ') in PAGE_NUMBERS
+            or text.strip('- ') in ROMAN_NUMERALS):
+            return True
+        return False
+
+    @staticmethod
+    def is_footer(text):
+        text = text.strip()
+        if text.startswith('SECURITY CLASSIFICATION'):
+            return True
+        if text in VARIOUS_FOOTERS:
+            return True
+        if (text.strip('- ') in PAGE_NUMBERS
+            or text.strip('- ') in ROMAN_NUMERALS):
+            return True
+        if len(text) <= 2 and not text.isdigit():
+            return True
+        #tokens = [t.lower() for t in word_tokenize(text)]
+        #common = len([t for t in tokens if LEMMATIZER.lemmatize(t) in WORDS])
+        #ratio = float(common) / len(tokens)
+        #if ratio < MINIMUM_RATIO_OF_KNOWN_WORDS:
+        #    return True
+        return False
+
+    def add(self, line):
+        self.buffer.write(line)
+
+    def parse(self, line):
+        self.number = line.strip().strip(u"\U0001F4C3").strip()
+        self.text = self.buffer.getvalue()
+        self.split_header()
+        self.split_footer()
+        self.end = self.start + len(self.text)
+
+    def split_header(self):
+        header_and_text = self.text.split("\n\n", 1)
+        if len(header_and_text) == 2:
+            header = header_and_text[0]
+            # Candidate headers are one line only.
+            if header.find('\n') == -1:
+                if self.is_header(header):
+                    HEADER_FILE.write("+ %s\n" % header)
+                else:
+                    HEADER_FILE.write("- %s\n" % header)
+
+    def split_footer(self):
+        text_and_footer = self.text.strip().rsplit("\n\n", 1)
+        if len(text_and_footer) == 2:
+            footer = text_and_footer[1]
+            # Candidate footers are one line only.
+            if footer.find('\n') == -1:
+                if self.is_footer(footer):
+                    FOOTER_FILE.write("+ %s\n" % footer)
+                else:
+                    FOOTER_FILE.write("- %s\n" % footer)
+
+    def as_annotation(self):
+        properties = {
+            "id": "p%s" % self.number,
+            "@type": vocab('Page'),
+            "start": self.start,
+            "end": self.end }
+        return Annotation(properties)
 
 
 def test_lif_file(lif_file):
@@ -129,4 +221,5 @@ if __name__ == '__main__':
     if help_wanted:
         usage()
     else:
+        print(source_dir, data_dir, filelist, start, end, crash, test)
         process_filelist(source_dir, data_dir, filelist, start, end, crash=crash, test=test)
