@@ -18,10 +18,6 @@ import getopt
 import json
 from io import StringIO
 
-#from nltk.corpus import words
-#from nltk import word_tokenize
-#from nltk.stem import WordNetLemmatizer
-
 from lif import LIF, Container, View, Annotation
 from utils import time_elapsed, elements, ensure_directory, print_element
 
@@ -36,10 +32,6 @@ PAGE_NUMBERS = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
 
 ROMAN_NUMERALS = {'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x',
                   'xi', 'xii', 'xii', 'xiv', 'xv', 'xvi', 'xvii', 'xvii', 'xix', 'xx'}
-
-# WORDS = set(words.words())
-# LEMMATIZER = WordNetLemmatizer()
-# MINIMUM_RATIO_OF_KNOWN_WORDS = 0.49
 
 
 @time_elapsed
@@ -82,7 +74,9 @@ def create_lif_file(src_file, lif_file, test=False):
                 page.parse(line)
                 offset = page.end
                 text.write(page.text)
-                page_view.annotations.append(page.as_annotation())
+                anno = page.as_annotation()
+                #print(anno.as_json())
+                page_view.annotations.append(anno)
                 page = Page(offset)
             else:
                 page.add(line)
@@ -139,11 +133,6 @@ class Page(object):
             return True
         if len(text) <= 2 and not text.isdigit():
             return True
-        #tokens = [t.lower() for t in word_tokenize(text)]
-        #common = len([t for t in tokens if LEMMATIZER.lemmatize(t) in WORDS])
-        #ratio = float(common) / len(tokens)
-        #if ratio < MINIMUM_RATIO_OF_KNOWN_WORDS:
-        #    return True
         return False
 
     def add(self, line):
@@ -159,10 +148,13 @@ class Page(object):
     def split_header(self):
         header_and_text = self.text.split("\n\n", 1)
         if len(header_and_text) == 2:
-            header = header_and_text[0]
+            header, text = header_and_text
             # Candidate headers are one line only.
             if header.find('\n') == -1:
                 if self.is_header(header):
+                    #print('H', header)
+                    self.text = text
+                    self.header = header.strip()
                     HEADER_FILE.write("+ %s\n" % header)
                 else:
                     HEADER_FILE.write("- %s\n" % header)
@@ -170,10 +162,13 @@ class Page(object):
     def split_footer(self):
         text_and_footer = self.text.strip().rsplit("\n\n", 1)
         if len(text_and_footer) == 2:
-            footer = text_and_footer[1]
+            text, footer = text_and_footer
             # Candidate footers are one line only.
             if footer.find('\n') == -1:
                 if self.is_footer(footer):
+                    #print('F', footer)
+                    self.text = text
+                    self.footer = footer.strip()
                     FOOTER_FILE.write("+ %s\n" % footer)
                 else:
                     FOOTER_FILE.write("- %s\n" % footer)
@@ -183,7 +178,12 @@ class Page(object):
             "id": "p%s" % self.number,
             "@type": vocab('Page'),
             "start": self.start,
-            "end": self.end }
+            "end": self.end,
+            "features": {} }
+        if self.header is not None:
+            properties['features']['header'] = self.header
+        if self.footer is not None:
+            properties['features']['footer'] = self.footer
         return Annotation(properties)
 
 

@@ -236,9 +236,8 @@ class Annotation(object):
             self.features[feat] = val
 
     def __str__(self):
-        s = "<{} {} {}-{} '{}'>".format(os.path.basename(self.type), self.id,
-                                        self.start, self.end, self.text)
-        return s.encode('utf-8')
+        return "<{} {} {}-{} '{}'>".format(os.path.basename(self.type), self.id,
+                                           self.start, self.end, self.text)
 
     def as_json(self):
         d = {"id": self.id, "@type": self.type, "features": self.features}
