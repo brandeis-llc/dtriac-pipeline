@@ -25,8 +25,6 @@ from utils import time_elapsed, elements, ensure_directory, print_element
 HEADER_FILE = open("list-headers.txt", 'w')
 FOOTER_FILE = open("list-footers.txt", 'w')
 
-VARIOUS_FOOTERS = { 'UNCLASSIFIED', 'NO. OF COPIES' }
-
 PAGE_NUMBERS = { '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
                  '11', '12', '13', '14', '15', '16', '17', '18', '19', '20'}
 
@@ -114,8 +112,6 @@ class Page(object):
 
     @staticmethod
     def is_header(text):
-        if text.lower().startswith('unclass'):
-            return True
         if (text.strip('- ') in PAGE_NUMBERS
             or text.strip('- ') in ROMAN_NUMERALS):
             return True
@@ -124,10 +120,6 @@ class Page(object):
     @staticmethod
     def is_footer(text):
         text = text.strip()
-        if text.startswith('SECURITY CLASSIFICATION'):
-            return True
-        if text in VARIOUS_FOOTERS:
-            return True
         if (text.strip('- ') in PAGE_NUMBERS
             or text.strip('- ') in ROMAN_NUMERALS):
             return True
