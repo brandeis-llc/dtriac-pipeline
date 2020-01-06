@@ -5,9 +5,7 @@ into ElasticSearch.
 
 Usage:
 
-$ python create_index_docs.py -d DATA_DIR
-
-The ELA argument refers to the output directory.
+$ python create_index_docs.py -d DATA_DIR -f FILELIST (-b BEGIN) (-e END)
 
 Directories:
 lif   LIF files created from the OCR output
@@ -34,22 +32,8 @@ from utils import time_elapsed, elements, ensure_directory, print_element
 TECHNOLOGY_LIST = 'technologies.txt'
 
 
-def process_filelist(source_dir, data_dir, filelist, start, end, crash=False, test=False):
-    print("$ python3 %s\n" % ' '.join(sys.argv))
-    for n, fname in elements(filelist, start, end):
-        print_element(n, fname)
-        if crash:
-            process_list_element(source_dir, data_dir, fname, test=test)
-        else:
-            try:
-                process_list_element(source_dir, data_dir, fname, test=test)
-            except Exception as e:
-                print('ERROR:', Exception, e)
-
-
+@time_elapsed
 def create_documents(data_dir, filelist, start, end, crash=False):
-
-    #ontology = TechnologyOntology()
     print("$ python3 %s\n" % ' '.join(sys.argv))
     for n, fname in elements(filelist, start, end):
         print_element(n, fname)
@@ -244,8 +228,6 @@ class Document(object):
 
     def _collect_entities(self):
         view = self.get_view("ner")
-        c = Counter([e.features.get('category') for e in view.annotations])
-        print(c)
         for entity in view.annotations:
             entity.text = self.get_text(entity)
             category = entity.features.get('category')
@@ -371,7 +353,7 @@ class Document(object):
                 if s.features.get('type') == 'normal']
 
     def write(self, dirname):
-        self.annotations.write(os.path.join(dirname, "%04d.json" % self.id),
+        self.annotations.write(os.path.join(dirname, "%05d.json" % self.id),
                                self.lif.metadata["title"],
                                self.lif.metadata["year"],
                                self.lif.metadata["abstract"])

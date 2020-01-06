@@ -8,7 +8,7 @@ $ export DATA=/data/dtriac/dtriac-19d/all-processed
 ```
 
 
-The two file lists (`files-sorted.txt` and `files-random.txt`) have a list of all OCR output in `/data/dtriac/dtriac-19d/all` and were created as follows:
+The two file lists (`files-sorted.txt` and `files-random.txt`) have a list of all OCR-ed files in `/data/dtriac/dtriac-19d/all` and were created as follows:
 
 ```bash
 $ find /data/dtriac/dtriac-19d/all | grep tesseract- | cut -d'/' -f6- > files-sorted.txt
@@ -100,3 +100,22 @@ $ python2 run_tarsqi.py -d DATA_DIR -f FILELIST -e 100
 This does not run the full TTK pipeline, just the preprocessor and time and event extraction.
 
 Note that TTK requires Python 2.7. One other difference is that unlike previous modules this module creates gzipped files. Without compression running this on the first 1000 files creates 151M of data, which translates to about 315G for the entire dataset. Compression reduces disk space usage by a factor 15.
+
+
+## Creating the JSON documents for the index
+
+Use the `create_index_docs.py` script in this directory.
+
+```bash
+$ python3 create_index_docs -d $DATA -f files-random.txt -e 99999
+```
+
+This script is a bit different from the other Python scripts in that it does not preserve the directory structure or the names of the files. It just dumps all files in `$DATA/ela` and uses names starting from `00001.json`.
+
+Once you have create these documents you can load them into the index with
+
+```bash
+$ python3 load_index dtriac-19d $DATA/ela
+```
+
+This assume that an Elastic Search instance is running on localhost on port 9200 and that it contains an index named `dtriac-19d`.
