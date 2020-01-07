@@ -102,6 +102,56 @@ This does not run the full TTK pipeline, just the preprocessor and time and even
 Note that TTK requires Python 2.7. One other difference is that unlike previous modules this module creates gzipped files. Without compression running this on the first 1000 files creates 151M of data, which translates to about 315G for the entire dataset. Compression reduces disk space usage by a factor 15.
 
 
+## Technologies
+
+This requires two steps at the moment, one is to create a technology ontology using legacy code and the other is to use this ontology to lookup terms. For the first step you need the following repositories:
+
+- https://github.com/techknowledgist/tgist-corpus-preparation
+- https://github.com/techknowledgist/tFeatures
+- https://github.com/techknowledgist/tgist-classifiers
+
+The first has two scripts `dtriac/lif2txt.txt` and `dtriac/create_filelist.txt` where the first takes the LIF files and creates bare text files, use this if you don't already have those files in you `$DATA` directory. The second script creates the file list that is used by the technology code. Then you take the technology code in the `tFeatures` repository, updated with some functionality to run the code over raw text data (at least commit 7973f07 or later in the develop branch). I ran this on my desktop at home as follows. First setting a few environment variables
+
+```bash
+$ export FILES=/DATA/dtra/dtriac/dtriac-19d/files.txt
+$ export CORPUS=/DATA/dtra/dtriac/dtriac-19d/corpus
+```
+
+The first points at the file list created with `dtriac/create_filelist.txt`, the second points at where technology preprocessing data are put.
+
+Now you can do the basic processing:
+
+```bash
+$ cd code
+$ python step1_init.py -f $FILES -c $CORPUS --source text
+$ python step2_process.py -c $CORPUS -n 15349 --populate --verbose
+$ python step2_process.py -c $CORPUS -n 15349 --xml2txt --verbose
+$ python step2_process.py -c $CORPUS -n 15349 --txt2tag --verbose
+$ python step2_process.py -c $CORPUS -n 15349 --tag2chk --verbose
+```
+
+Followed by the technology classifier, fist some environment variables
+
+```bash
+$ export CLASSIFICATION=/DATA/dtra/dtriac/dtriac-19d/classification
+$ export MODEL=data/models/technologies-010-20140911/train.model
+$ export MALLET=/Applications/ADDED/nlp/mallet/mallet-2.0.7/bin/
+```
+
+The first is where the results of the technology classification are saved, the second the location of the model and the third the location of Mallet. Use the `tgist-classifiers` repository (commit 82bce43 or later on the develop branch). Now you can run this (spread out over a few lines for readability):
+
+```bash
+$ python run_tclassify.py
+    --classify
+    --corpus $CORPUS
+    --model $MODEL
+    --output $CLASSIFICATION
+    --mallet-dir $MALLET
+```
+
+For the second step (looking up ontology terms) you use the file...
+
+
 ## Creating the JSON documents for the index
 
 Use the `create_index_docs.py` script in this directory.
@@ -118,4 +168,4 @@ Once you have create these documents you can load them into the index with
 $ python3 load_index dtriac-19d $DATA/ela
 ```
 
-This assume that an Elastic Search instance is running on localhost on port 9200 and that it contains an index named `dtriac-19d`.
+This assume that an Elasticsearch instance is running on localhost on port 9200 and that it contains an index named `dtriac-19d`.

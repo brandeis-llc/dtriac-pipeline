@@ -3,6 +3,8 @@ import sys
 import time
 import getopt
 
+from lif import View
+
 
 def time_elapsed(fun):
     """Function to be used as a decorator for measuring time elapsed."""
@@ -69,3 +71,15 @@ def get_options():
     end = int(options.get('-e', 1))
     crash = True if '--crash' in options else False
     return data_dir, filelist, start, end, crash
+
+
+def create_view(identifier, tag, producer):
+    vocab_url = 'http://vocab.lappsgrid.org/%s' % tag
+    view_spec = {
+        'id': identifier,
+        'metadata': {
+            'contains': {
+                vocab_url: {
+                    'producer': producer}}},
+        'annotations': []}
+    return View(json_obj=view_spec)
