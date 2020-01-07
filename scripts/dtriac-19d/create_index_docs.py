@@ -10,7 +10,9 @@ $ python create_index_docs.py -d DATA_DIR -f FILELIST (-b BEGIN) (-e END)
 Directories:
 lif   LIF files created from the OCR output
 top   topics
-ner   sentence splitting, pos and named entities
+spl   sentence splitting
+pos   parts of speech
+ner   named entities
 tex   technologies
 ttk   tarsqi processing
 ela   output
@@ -27,9 +29,6 @@ from collections import Counter
 
 from lif import LIF, Container, Annotation
 from utils import time_elapsed, elements, ensure_directory, print_element
-
-
-TECHNOLOGY_LIST = 'technologies.txt'
 
 
 @time_elapsed
@@ -75,25 +74,6 @@ def create_document(data_dir, fname):
     doc.write(os.path.join(data_dir, 'ela'))
 
 
-class TechnologyOntology(object):
-
-    """TechnologyOntology is rather a big word for this since all this does at the
-    moment is to keep a list of technologies and a stoplist of terms that are not
-    technologies."""
-
-    def __init__(self):
-        self.technologies = set()
-        self.stoplist = set()
-        for line in open(TECHNOLOGY_LIST):
-            tokens = line.strip().split()
-            if tokens:
-                sign = tokens[0]
-                term = ' '.join(tokens[1:])
-                if sign == '+':
-                    self.technologies.add(term)
-                else:
-                    self.stoplist.add(term)
-
 
 class Document(object):
 
@@ -123,22 +103,16 @@ class Document(object):
         self._collect_annotations()
 
     def _add_views(self, ner_file, top_file):
-        #lif = Container(ner_file).payload
-        #v2 = lif.views[1]
-        #for anno in v2.annotations:
-        #    cat = anno.features['category']
-        #    if cat == 'date':
-        #        print(anno.features['word'], lif.text.value[anno.start:anno.end])
         self._add_view("ner", ner_file, 1)
         self._add_view("top", top_file, 0)
 
     def _add_view(self, identifier, fname, view_rank):
-        """Load fname as either a LIF object or a Container object and select
-        the specified view, indicated by an index in the view list. Add the
-        identifier to this view and add it to the list of views."""
-        # Note that some files contain LIF objects and others contain Containers
-        # with LIF embedded. The view we are looking for is the first or second,
-        # depending on how the processor for those data was set up.
+        """Load fname as either a LIF object or a Container object and select the
+        specified view, indicated by an index in the view list. Add the
+        identifier to this view and add it to the list of views. Note that some
+        files contain LIF objects and others contain Containers with LIF
+        embedded. The view we are looking for is the first or second, depending
+        on how the processor for those data was set up."""
         try:
             view = Container(fname).payload.views[view_rank]
         except KeyError:
@@ -147,34 +121,15 @@ class Document(object):
         self.lif.views.append(view)
 
     def _get_title(self):
+        """We have no document structure and no metadata so just return None."""
         return None
-        view = self.get_view("structure")
-        text = self.lif.text.value
-        for annotation in view.annotations:
-            if annotation.type.endswith('Title'):
-                return text[annotation.start:annotation.end]
 
     def _get_year(self):
         return None
-        year = self.lif.metadata.get('year')
-        if year is not None:
-            return year
-        else:
-            # not all files have the year in the metadata, fake it with some
-            # analyses of the references
-            year = 0
-            current_year = datetime.datetime.now().year
-            for ref in self.lif.metadata.get('references', []):
-                year = max(year, min(current_year, ref.get('year', 0)))
-            return year if year > 0 else None
 
     def _get_abstract(self):
+        """We have no document structure and no metadata so just return None."""
         return None
-        view = self.get_view("structure")
-        text = self.lif.text.value
-        for annotation in view.annotations:
-            if annotation.type.endswith('Abstract'):
-                return text[annotation.start:annotation.end]
 
     def get_view(self, identifier):
         return self.lif.get_view(identifier)
@@ -200,7 +155,6 @@ class Document(object):
         self._collect_entities()
         #self._collect_events()
         #self._collect_verbnet_classes()
-        #self._collect_relations()
 
     def _collect_authors(self):
         """Just collect authors as a list and put them in the index."""
@@ -210,9 +164,7 @@ class Document(object):
     def _collect_topics(self):
         """Collect the topics and put them on a list in the index."""
         view = self.get_view("top")
-        #print('>>>', view.annotations)
         for annotation in view.annotations:
-            #print(annotation)
             if annotation.type.endswith('SemanticTag'):
                 topic_name = annotation.features['topic_name']
                 self.annotations.topics.append(topic_name)
@@ -272,25 +224,6 @@ class Document(object):
             annotation.text =  self.get_text(annotation)
             self.annotations.vnc.add(annotation)
         self.annotations.vnc.finish()
-
-    def _collect_relations(self):
-        #vnc_view = self.get_view("vnc")
-        #for anno in vnc_view.annotations:
-        #    obj = anno.as_json()
-        #    thingie = "%s-%s %s %s" % (obj['start'], obj['end'], obj['features']['lemma'],
-        #                               ' '.join(obj['features']['tags']))
-        #    print(thingie)
-        view = self.get_view("rel")
-        idx = { anno.id: anno for anno in view.annotations if anno.type.endswith('Markable') }
-        for annotation in view.annotations:
-            if annotation.type.endswith('GenericRelation'):
-                relation = Relation(self, idx, annotation)
-                #print(relation)
-                self._add_verbnet_class(relation)
-                #print(relation)
-                #print('')
-                if relation.is_acceptable():
-                    self.annotations.relations.append(relation)
 
     def _add_verbnet_class(self, relation):
         vnc_view = self.get_view("vnc")
@@ -506,10 +439,10 @@ class Annotations(object):
         self.persons = IndexedAnnotations(doc, "persons")
         self.organizations = IndexedAnnotations(doc, "organizations")
         self.locations = IndexedAnnotations(doc, "locations")
-        self.events = IndexedAnnotations(doc, "events")
-        self.times = IndexedAnnotations(doc, "times")
-        self.vnc = IndexedAnnotations(doc, "vnc")
-        self.relations = []
+        #self.events = IndexedAnnotations(doc, "events")
+        #self.times = IndexedAnnotations(doc, "times")
+        #self.vnc = IndexedAnnotations(doc, "vnc")
+        #self.relations = []
 
     def __str__(self):
         return "<Index %s %s>" % (self.docid, self.count_string())
@@ -536,9 +469,10 @@ class Annotations(object):
             "person": self.persons.get_condensed_annotations(),
             "location": self.locations.get_condensed_annotations(),
             "organization": self.organizations.get_condensed_annotations(),
-            "event": self.events.get_condensed_annotations(),
+            #"event": self.events.get_condensed_annotations(),
             "time": self.times.get_condensed_annotations(),
-            "relation": [self.relation_dict(r) for r in self.relations] }
+            #"relation": [self.relation_dict(r) for r in self.relations]
+        }
         with codecs.open(fname, 'w', encoding='utf8') as fh:
             fh.write(json.dumps(json_object, sort_keys=True, indent=4))
 

@@ -1,5 +1,7 @@
 import os
+import sys
 import time
+import getopt
 
 
 def time_elapsed(fun):
@@ -9,6 +11,24 @@ def time_elapsed(fun):
         fun(*args, **kwargs)
         print("\nTime elapsed = %s" % (time.time() - t0))
     return wrapper
+
+
+
+@time_elapsed
+def process_list(data_dir, filelist, start, end, crash, fun):
+    """Basic list processing. Using a data directory, a file list, start and end on
+    that list, and a function to be applied to the data directory and a relative
+    path from the list."""
+    print("$ python3 %s\n" % ' '.join(sys.argv))
+    for n, fname in elements(filelist, start, end):
+        print_element(n, fname)
+        if crash:
+            fun(data_dir, fname)
+        else:
+            try:
+                fun(data_dir, fname)
+            except Exception as e:
+                print('ERROR:', Exception, e)
 
 
 def elements(filelist, start, end):
@@ -40,3 +60,12 @@ def ensure_directory(*fnames):
             os.makedirs(directory)
 
 
+def get_options():
+    """Default method for getting options."""
+    options = dict(getopt.getopt(sys.argv[1:], 'd:f:b:e:', ['crash'])[0])
+    data_dir = options.get('-d')
+    filelist = options.get('-f', 'files-random.txt')
+    start = int(options.get('-b', 1))
+    end = int(options.get('-e', 1))
+    crash = True if '--crash' in options else False
+    return data_dir, filelist, start, end, crash
