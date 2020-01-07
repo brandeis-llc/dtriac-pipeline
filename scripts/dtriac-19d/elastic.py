@@ -9,6 +9,7 @@ from collections import Counter
 import json
 
 from elasticsearch import Elasticsearch 
+from elasticsearch import helpers
 from elasticsearch.exceptions import NotFoundError
 
 
@@ -20,11 +21,18 @@ class Index(object):
         if index_elements is not None:
             self.load(index_elements)
 
-    def load(self, elements):
+    def to_bulk_iterable(self, elements):
         for i, element in enumerate(elements):
             docid = element.get('docid')
             identifier = i if docid is None else docid
-            self.es.index(index=self.index, id=identifier, body=element)
+            yield {
+                "_type":"_doc",
+                "_id":identifier,
+                "_index": self.index,
+                "_source": element } 
+
+    def load(self, elements):
+        helpers.bulk(self.es, self.to_bulk_iterable(elements))
 
     def get(self, message, doc_id, dribble=False):
         print("\n{}".format(message))
