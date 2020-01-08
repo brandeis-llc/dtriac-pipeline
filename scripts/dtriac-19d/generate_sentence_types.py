@@ -13,7 +13,7 @@ time while processing the first file (about 3-5 seconds on a 2015 3.2GHz iMac).
 
 Usage:
 
-$ python generate_sentence_type.py -d DATA_DIR
+$ python generate_sentence_type.py -d DATA_DIR -f FILELIST -s START -e END
 
 This collects information from DATA_DIR/lif and DATA_DIR/spl and writes to
 DATA_DIR/sen.

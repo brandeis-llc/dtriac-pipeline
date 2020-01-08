@@ -123,11 +123,11 @@ Now you can do the basic processing:
 
 ```bash
 $ cd code
-$ python step1_init.py -f $FILES -c $CORPUS --source text
-$ python step2_process.py -c $CORPUS -n 15349 --populate --verbose
-$ python step2_process.py -c $CORPUS -n 15349 --xml2txt --verbose
-$ python step2_process.py -c $CORPUS -n 15349 --txt2tag --verbose
-$ python step2_process.py -c $CORPUS -n 15349 --tag2chk --verbose
+$ python2 step1_init.py -f $FILES -c $CORPUS --source text
+$ python2 step2_process.py -c $CORPUS -n 15349 --populate --verbose
+$ python2 step2_process.py -c $CORPUS -n 15349 --xml2txt --verbose
+$ python2 step2_process.py -c $CORPUS -n 15349 --txt2tag --verbose
+$ python2 step2_process.py -c $CORPUS -n 15349 --tag2chk --verbose
 ```
 
 Followed by the technology classifier, fist some environment variables
@@ -141,7 +141,7 @@ $ export MALLET=/Applications/ADDED/nlp/mallet/mallet-2.0.7/bin/
 The first is where the results of the technology classification are saved, the second the location of the model and the third the location of Mallet. Use the `tgist-classifiers` repository (commit 82bce43 or later on the develop branch). Now you can run this (spread out over a few lines for readability):
 
 ```bash
-$ python run_tclassify.py
+$ python2 run_tclassify.py
     --classify
     --corpus $CORPUS
     --model $MODEL
@@ -149,7 +149,19 @@ $ python run_tclassify.py
     --mallet-dir $MALLET
 ```
 
-For the second step (looking up ontology terms) you use the file...
+For the second step (looking up ontology terms) you use the script `lookup.py`.
+
+```bash
+$ python3 lookup.py -d $DATA -f file-random.txt -e 99999
+```
+
+This looks up all technologies in the `technologies.txt` file in the tokenized and part-of-speech tagged data in `$DATA/pos`. The technologies file is part of the repository, but can be recreated with
+
+```bash
+$ python3 lookup --compile-technologies $CLASSIFICATION
+```
+
+The above uses the results from the technology classification.
 
 
 ## Creating the JSON documents for the index
