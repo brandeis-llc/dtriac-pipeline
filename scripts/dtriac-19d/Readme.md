@@ -104,7 +104,7 @@ Note that TTK requires Python 2.7. One other difference is that unlike previous 
 
 ## Technologies
 
-This requires two steps at the moment, one is to create a technology ontology using legacy code and the other is to use this ontology to lookup terms. For the first step you need the following repositories:
+This requires two steps at the moment, one is to create a technology ontology using legacy code and the other is to use this ontology to look up terms. For the first step you need the following repositories:
 
 - https://github.com/techknowledgist/tgist-corpus-preparation
 - https://github.com/techknowledgist/tFeatures

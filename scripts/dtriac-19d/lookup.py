@@ -68,7 +68,7 @@ def compile_technologies(classification, technologies_file):
 
 def lookup_technologies(data_dir, fname):
     subdir = os.path.split(fname)[0]
-    pos_file = os.path.join(data_dir, 'pos', subdir, "%s.ner.lif" % subdir)
+    pos_file = os.path.join(data_dir, 'pos', subdir, "%s.pos.lif" % subdir)
     tex_file = os.path.join(data_dir, 'tex', subdir, "%s.lup.lif" % subdir)
     ensure_directory(tex_file)
     lif = Container(pos_file).payload
@@ -77,18 +77,20 @@ def lookup_technologies(data_dir, fname):
     tex_view = create_view('tex', 'Technology', 'dtriac-pipeline:lookup.py')
     lif_tex.views = [tex_view]
     tokens = [a for a in pos_view.annotations if a.type.endswith('Token')]
-    _lookup_technologies_in_tokens(tokens, tex_view)
+    _lookup_technologies_in_tokens(lif, tokens, tex_view)
     lif_tex.write(fname=tex_file, pretty=True)
 
 
-def _lookup_technologies_in_tokens(tokens, tex_view):
+def _lookup_technologies_in_tokens(lif, tokens, tex_view):
     next_id = 0
     for i in range(len(tokens)):
         pairs = [(_get_text_from_tokens(tokens, i, i + j), j) for j in range(2,8)]
         for w, length in pairs:
             if w in TECHNOLOGIES.terms:
                 p1 = tokens[i].start
-                p2 = tokens[i+length].end
+                p2 = tokens[i+length-1].end
+                w_in_text = lif.text.value[p1:p2].replace('\n', '<EOL>')
+                #print('   ', w, '--', w_in_text)
                 if DEBUG:
                     OUT.write("%s\t%s\t%s\n" % (p1, p2, w))
                 next_id += 1

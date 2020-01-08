@@ -28,7 +28,7 @@ from pprint import pformat
 from collections import Counter
 
 from lif import LIF, Container, Annotation
-from utils import time_elapsed, elements, ensure_directory, print_element
+from utils import time_elapsed, elements, ensure_directory, print_element, get_options
 
 
 @time_elapsed
@@ -52,13 +52,14 @@ def create_document(data_dir, fname):
     lif_file = os.path.join(data_dir, 'lif', fname[:-3] + 'lif')
     top_file = os.path.join(data_dir, 'top', fname[:-3] + 'lif')
     ner_file = os.path.join(data_dir, 'ner', subdir, '%s.ner.lif' % subdir)
+    tex_file = os.path.join(data_dir, 'tex', subdir, '%s.lup.lif' % subdir)
 
     if not (os.path.exists(lif_file) and os.path.exists(top_file)):
         print('Skipping...  %s' % fname)
         return
 
     Sentence.ID = 0
-    doc = Document(fname, lif_file, top_file, ner_file)
+    doc = Document(fname, lif_file, top_file, ner_file, tex_file)
     topics_view = doc.lif.get_view('top')
 
     """
@@ -84,14 +85,14 @@ class Document(object):
         cls.ID += 1
         return cls.ID
 
-    def __init__(self, fname, lif_file, top_file, ner_file):
+    def __init__(self, fname, lif_file, top_file, ner_file, tex_file):
 
         """Build a single LIF object with all relevant annotations. The annotations
         themselves are stored in the Annotations object in self.annotations."""
         self.id = Document.new_id()
         self.fname = fname
         self.lif = Container(lif_file).payload
-        self._add_views(ner_file, top_file)
+        self._add_views(ner_file, tex_file, top_file)
         self.lif.metadata["filename"] = self.fname
         self.lif.metadata["title"] = self._get_title()
         self.lif.metadata["year"] = self._get_year()
@@ -102,8 +103,9 @@ class Document(object):
         #self._collect_allowed_offsets()
         self._collect_annotations()
 
-    def _add_views(self, ner_file, top_file):
+    def _add_views(self, ner_file, tex_file, top_file):
         self._add_view("ner", ner_file, 1)
+        self._add_view("tex", tex_file, 0)
         self._add_view("top", top_file, 0)
 
     def _add_view(self, identifier, fname, view_rank):
@@ -151,7 +153,7 @@ class Document(object):
         #self._collect_authors()
         self._collect_topics()
         #self._collect_sentences()
-        #self._collect_technologies()
+        self._collect_technologies()
         self._collect_entities()
         #self._collect_events()
         #self._collect_verbnet_classes()
@@ -198,7 +200,6 @@ class Document(object):
         for tech in view.annotations:
             tech.text = self.get_text(tech)
             self.annotations.technologies.add(tech)
-        self._update_technologies()
         self.annotations.technologies.finish()
 
     def _collect_events(self):
@@ -237,46 +238,6 @@ class Document(object):
                and vnc_anno.features["tags"][0] != "None":
                 relation.vnc = vnc_anno.features["tags"]
 
-    def _update_technologies(self):
-        """Goes throught the list of technologies and removes those that are on the
-        stoplist of the technology ontology and adds technologies that occur in the
-        ontology as well as in the text."""
-        self._remove_technologies()
-        self._add_technologies()
-
-    def _remove_technologies(self):
-        technologies = self.annotations.technologies
-        for term in self.ontology.stoplist:
-            if term in technologies.texts:
-                technologies.texts.remove(term)
-        technologies.annotations = [a for a in technologies.annotations
-                                    if not a.text in self.ontology.stoplist]
-
-    def _add_technologies(self):
-        """Takes the technology ontology and tries to add each element to the
-        technologies index of this document. Add only if the technology term
-        occurs in the text. This is done rather inefficiently by searching the
-        entire text # for each technology, but on a 30K LIF document this takes
-        less than # 0.01 seconds for 100 technology terms, so we can live with
-        this."""
-        technologies = self.annotations.technologies
-        if technologies:
-            next_id = max([int(a.id[1:]) for a in technologies.annotations]) + 1
-            # print len(technologies.texts), len(technologies.annotations)
-            for term in self.ontology.technologies:
-                searchterm = r'\b%s\b' % term
-                matches = list(re.finditer(searchterm,
-                                           self.annotations.text,
-                                           flags=re.I))
-                for match in matches:
-                    json_obj = { "id": "t%d" % next_id,
-                                 "@type": 'http://vocab.lappsgrid.org/Technology',
-                                 "start": match.start(), "end": match.end() }
-                    next_id += 1
-                    anno = Annotation(json_obj)
-                    anno.text = term
-                    technologies.add(anno)
-
     def get_sentences(self):
         # take the sentences view, it has the sentences copied from the ttk
         # view, but with the type (normal vs crap) added
@@ -286,7 +247,7 @@ class Document(object):
                 if s.features.get('type') == 'normal']
 
     def write(self, dirname):
-        self.annotations.write(os.path.join(dirname, "%05d.json" % self.id),
+        self.annotations.write(os.path.join(dirname, "%06d.json" % self.id),
                                self.lif.metadata["title"],
                                self.lif.metadata["year"],
                                self.lif.metadata["abstract"])
@@ -425,7 +386,7 @@ class Annotations(object):
     def __init__(self, fname, doc=None, docid=None, sentid=None, text=None):
         self.fname = fname
         self.doc = doc
-        self.docid = "%04d" % docid
+        self.docid = "%06d" % docid
         if sentid is not None:
             self.docid = "%04d-%04d" % (docid, sentid)
         self.text = text
@@ -470,7 +431,7 @@ class Annotations(object):
             "location": self.locations.get_condensed_annotations(),
             "organization": self.organizations.get_condensed_annotations(),
             #"event": self.events.get_condensed_annotations(),
-            "time": self.times.get_condensed_annotations(),
+            #"time": self.times.get_condensed_annotations(),
             #"relation": [self.relation_dict(r) for r in self.relations]
         }
         with codecs.open(fname, 'w', encoding='utf8') as fh:
@@ -633,11 +594,12 @@ def _add_value(json_object, field, value):
 
 if __name__ == '__main__':
 
-    options = dict(getopt.getopt(sys.argv[1:], 'd:f:b:e:', ['crash'])[0])
-    data_dir = options.get('-d')
-    filelist = options.get('-f')
-    start = int(options.get('-b', 1))
-    end = int(options.get('-e', 1))
-    crash = True if '--crash' in options else False
+#    options = dict(getopt.getopt(sys.argv[1:], 'd:f:b:e:', ['crash'])[0])
+#    data_dir = options.get('-d')
+#    filelist = options.get('-f')
+#    start = int(options.get('-b', 1))
+#    end = int(options.get('-e', 1))
+#    crash = True if '--crash' in options else False
 
+    data_dir, filelist, start, end, crash = get_options()
     create_documents(data_dir, filelist, start, end, crash=crash)
