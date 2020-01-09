@@ -14,11 +14,14 @@ spl   sentence splitting
 pos   parts of speech
 ner   named entities
 tex   technologies
-ttk   tarsqi processing
+mta   metadata (year and author)
 ela   output
 
 THIS FILE IS IN FLUX. It contains a lot of code from the dtra-534 demo that is
 possibly not relevant anymore.
+
+TODO:
+- create ela if it does not exist
 
 """
 
@@ -50,6 +53,7 @@ def create_document(data_dir, fname):
     # the subdir is really the document identifier
     subdir = os.path.split(fname)[0]
     lif_file = os.path.join(data_dir, 'lif', fname[:-3] + 'lif')
+    mta_file = os.path.join(data_dir, 'mta', subdir, '%s.mta.lif' % subdir)
     top_file = os.path.join(data_dir, 'top', fname[:-3] + 'lif')
     ner_file = os.path.join(data_dir, 'ner', subdir, '%s.ner.lif' % subdir)
     tex_file = os.path.join(data_dir, 'tex', subdir, '%s.lup.lif' % subdir)
@@ -59,7 +63,7 @@ def create_document(data_dir, fname):
         return
 
     Sentence.ID = 0
-    doc = Document(fname, lif_file, top_file, ner_file, tex_file)
+    doc = Document(fname, lif_file, mta_file, top_file, ner_file, tex_file)
     topics_view = doc.lif.get_view('top')
 
     """
@@ -85,13 +89,15 @@ class Document(object):
         cls.ID += 1
         return cls.ID
 
-    def __init__(self, fname, lif_file, top_file, ner_file, tex_file):
+    def __init__(self, fname, lif_file, mta_file, top_file, ner_file, tex_file):
 
         """Build a single LIF object with all relevant annotations. The annotations
         themselves are stored in the Annotations object in self.annotations."""
         self.id = Document.new_id()
         self.fname = fname
         self.lif = Container(lif_file).payload
+        self.meta = LIF(mta_file)
+        #print(self.meta.metadata)
         self._add_views(ner_file, tex_file, top_file)
         self.lif.metadata["filename"] = self.fname
         self.lif.metadata["title"] = self._get_title()
@@ -127,7 +133,7 @@ class Document(object):
         return None
 
     def _get_year(self):
-        return None
+        return self.meta.metadata["year"]
 
     def _get_abstract(self):
         """We have no document structure and no metadata so just return None."""
@@ -150,7 +156,7 @@ class Document(object):
                     self.allowed_offsets.add(p)
 
     def _collect_annotations(self):
-        #self._collect_authors()
+        self._collect_authors()
         self._collect_topics()
         #self._collect_sentences()
         self._collect_technologies()
@@ -159,9 +165,8 @@ class Document(object):
         #self._collect_verbnet_classes()
 
     def _collect_authors(self):
-        """Just collect authors as a list and put them in the index."""
-        authors = [author['name'] for author in self.lif.metadata['authors']]
-        self.annotations.authors = authors
+        """Just get the authors from the metadata and put them in the index."""
+        self.annotations.authors = self.meta.metadata['authors']
 
     def _collect_topics(self):
         """Collect the topics and put them on a list in the index."""

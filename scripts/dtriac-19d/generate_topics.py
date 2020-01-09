@@ -198,7 +198,7 @@ def usage():
 if __name__ == '__main__':
 
     data_dir = '/DATA//sample-01000'
-    filelist = '../../data/files-random-01000.txt'
+    filelist = 'files-random.txt'
 
     options = dict(getopt.getopt(sys.argv[1:], 'd:f:s:e:bh', ['crash', 'help', 'build'])[0])
     data_dir = options.get('-d', data_dir)
