@@ -178,6 +178,7 @@ class Text(object):
     def __init__(self, json_obj=None):
         self.language = 'en'
         self.value = ''
+        self.fname = None
         if json_obj is not None:
             self.language = json_obj.get('language')
             self.value = json_obj.get('@value')
@@ -186,7 +187,7 @@ class Text(object):
         return "<Text lang={} length={:d}>".format(self.language, len(self.value))
 
     def as_json(self):
-        d = {"@value": self.value}
+        d = {"@value": self.value, "fname": self.fname}
         if self.language is not None:
             d["language"] = self.language
         return d
