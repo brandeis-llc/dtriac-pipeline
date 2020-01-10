@@ -57,13 +57,14 @@ def create_document(data_dir, fname):
     top_file = os.path.join(data_dir, 'top', fname[:-3] + 'lif')
     ner_file = os.path.join(data_dir, 'ner', subdir, '%s.ner.lif' % subdir)
     tex_file = os.path.join(data_dir, 'tex', subdir, '%s.lup.lif' % subdir)
+    wik_file = os.path.join(data_dir, 'wik', subdir, '%s.wik.lif' % subdir)
 
     if not (os.path.exists(lif_file) and os.path.exists(top_file)):
         print('Skipping...  %s' % fname)
         return
 
     Sentence.ID = 0
-    doc = Document(fname, lif_file, mta_file, top_file, ner_file, tex_file)
+    doc = Document(fname, lif_file, mta_file, top_file, ner_file, tex_file, wik_file)
     topics_view = doc.lif.get_view('top')
 
     """
@@ -89,7 +90,7 @@ class Document(object):
         cls.ID += 1
         return cls.ID
 
-    def __init__(self, fname, lif_file, mta_file, top_file, ner_file, tex_file):
+    def __init__(self, fname, lif_file, mta_file, top_file, ner_file, tex_file, wik_file):
 
         """Build a single LIF object with all relevant annotations. The annotations
         themselves are stored in the Annotations object in self.annotations."""
@@ -97,6 +98,7 @@ class Document(object):
         self.fname = fname
         self.lif = Container(lif_file).payload
         self.meta = LIF(mta_file)
+        self.wikis = LIF(wik_file).metadata['wikified_es']
         #print(self.meta.metadata)
         self._add_views(ner_file, tex_file, top_file)
         self.lif.metadata["filename"] = self.fname
@@ -397,6 +399,8 @@ class Annotations(object):
         self.text = text
         self.authors = []
         self.year = None
+        self.wikis = doc.wikis
+        self.wiki1 = doc.wikis[0]
         self.topics = []
         self.topic_elements = []
         self.sentences = []
@@ -425,6 +429,8 @@ class Annotations(object):
             "text": self.text,
             "docid": self.docid,
             "docname": self.fname,
+            "ground_best": self.wiki1,
+            "ground_more": self.wikis,
             "title": title,
             "year": year,
             "author": self.authors,
