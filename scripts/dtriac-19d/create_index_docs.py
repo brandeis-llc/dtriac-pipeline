@@ -419,6 +419,17 @@ class Annotations(object):
                len(self.organizations), len(self.events), len(self.times),
                len(self.relations), len(self.topics))
 
+    def _get_pages(self):
+        # what a hack job...
+        pdfinfo_fname =f'/data/dtriac/dtriac-19d/all/{self.docid}/pdfinfo.txt'
+        if os.path.exists(pdfinfo_fname):
+            with open(pdfinfo_fname, 'r') as pdfinfo_f:
+                for line in pdfinfo_f:
+                    if line.startswith('Pages:'):
+                        return line.split()[1]
+        else:
+            return -1
+
     def write(self, fname, title=None, year=None, abstract=None):
         """Writes the document with the search fields to a json file."""
         json_object = {
@@ -427,6 +438,7 @@ class Annotations(object):
             "docname": self.fname,
             "!url_pdf": f"http://tarski.cs-i.brandeis.edu:8181/data/{self.docid}/pdf.pdf",
             "!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{self.docid}_0001.png",
+            "ori_pages": self._get_pages(),
             "title": title,
             "year": year,
             "author": self.authors,
