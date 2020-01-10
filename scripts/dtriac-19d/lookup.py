@@ -12,7 +12,7 @@ Uses two data files from the Brandeis Technology Finder and one from the
 grounding component:
 
 - technologies.txt
-- technologies-stoplist.txt
+- technologies-annotated.txt
 - data/wiki/wiki-titles-uniq-nr.txt
 
 The first is created by compile_technologies(), which runs on the output of the
@@ -38,8 +38,8 @@ from utils import get_options, process_list, ensure_directory, create_view
 
 DEBUG = False
 
-TECHNOLOGY_LIST = 'technologies.txt'
-TECHNOLOGY_STOPLIST = 'technologies-stoplist.txt'
+TECHNOLOGY_LIST = 'data/technologies/technologies.txt'
+TECHNOLOGY_STOPLIST = 'data/technologies/technologies-annotated.txt'
 WIKI_TITLES = 'data/wiki/wiki-titles-uniq-nr.txt'
 
 TECHNOLOGIES = None
