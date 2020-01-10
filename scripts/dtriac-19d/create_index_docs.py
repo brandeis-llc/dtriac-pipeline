@@ -28,7 +28,7 @@ from lif import LIF, Container, Annotation
 from utils import time_elapsed, elements, ensure_directory, print_element, get_options
 
 
-TARSKI_URL = 'http://tarski.cs-i.brandeis.edu:8181'
+TARSKI_URL = 'http://tarski.cs-i.brandeis.edu'
 
 
 @time_elapsed
@@ -201,6 +201,8 @@ class Annotations(object):
         self.docid = docid
         self.fname = fname
         self.doc = doc
+        #if sentid is not None:
+        #    self.docid = f"{self.docid:08}-{self.sentid:06}"
         self.text = text
         self.authors = []
         self.year = None
@@ -228,8 +230,11 @@ class Annotations(object):
             "text": self.text,
             "docid": self.docid,
             "docname": self.fname,
-            "docname-pdf": "%s/data/%s/pdf.pdf" % (TARSKI_URL, self.docid),
-            "docname-tes": "%s/data/%s/tesseract.txt" % (TARSKI_URL, self.docid),
+            "!url_pdf": "%s:8181/data/%s/pdf.pdf" % (TARSKI_URL, self.docid),
+            "!url_tes": "%s:8181/data/%s/tesseract.txt" % (TARSKI_URL, self.docid),
+            "!url_cover": "%s:5100/query/%s_0001.png" % (TARSKI_URL, self.docid),
+            #"!url_pdf": f"http://tarski.cs-i.brandeis.edu:8181/data/{self.docid}/pdf.pdf",
+            #"!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{self.docid}_0001.png",
             "year": year,
             "author": self.authors,
             "topic": self.topics,
