@@ -54,7 +54,7 @@ def generate_sentence_types(data_dir, fname):
 
     subdir = os.path.split(fname)[0]
     lif_file = os.path.join(data_dir, 'lif', subdir, "tesseract-300dpi-20p.lif")
-    spl_file = os.path.join(data_dir, 'spl', subdir, "%s.ner.lif" % subdir)
+    spl_file = os.path.join(data_dir, 'spl', subdir, "%s.spl.lif" % subdir)
     sen_file = os.path.join(data_dir, 'sen', subdir, "%s.sen.lif" % subdir)
     ensure_directory(sen_file)
 
