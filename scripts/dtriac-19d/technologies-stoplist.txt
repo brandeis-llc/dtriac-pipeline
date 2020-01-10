@@ -1,301 +1,301 @@
 - organization name
 - agency name
 - office name
-defense directive
-computer program
-data base
++ defense directive
++ computer program
++ data base
 - technical director
-burden estimate
++ burden estimate
 - kilo pascal
 - government sponsor
 - u.s. liquid
-defense memorandum
-principal investigator
-research program
-coordinate system
-nuclear device
-experimental program
-silver spring
++ defense memorandum
++ principal investigator
++ research program
++ coordinate system
++ nuclear device
++ experimental program
++ silver spring
 - test director
-thermal conductivity
-contract monitor
++ thermal conductivity
++ contract monitor
 - scientific director
-nuclear testing
++ nuclear testing
 - fiscal year
-data processing
++ data processing
 - complete listing
-civil engineering
-declassification downgrading
-development center
-square centimeter
++ civil engineering
++ declassification downgrading
++ development center
++ square centimeter
 - job order
-control system
-electrical engineering
-military activity
-giga becquerel
++ control system
++ electrical engineering
++ military activity
++ giga becquerel
 - deputy director
 - correction factor
 - cents e
-lbs avoirdupois
-digital computer
-dynamic loading
++ lbs avoirdupois
++ digital computer
++ dynamic loading
 - task unit
-data point
-optical system
-testing program
-recording system
-weapon system
++ data point
++ optical system
++ testing program
++ recording system
++ weapon system
 - prime contractor
-technical monitor
++ technical monitor
 - information office
-elastic scattering
-nuclear reactors
-unit vector
-operation redwing
-subject matter
-electrical conductivity
-integrated circuits
-vacuum system
++ elastic scattering
++ nuclear reactors
++ unit vector
++ operation redwing
++ subject matter
++ electrical conductivity
++ integrated circuits
++ vacuum system
 - executive director
-inelastic scattering
++ inelastic scattering
 - time consuming
-particulate matter
++ particulate matter
 - assistant director
-field testing
++ field testing
 - cm diameter
-laboratory testing
-scale factor
-detection system
-tape recorder
-measurement system
-dod contractors
++ laboratory testing
++ scale factor
++ detection system
++ tape recorder
++ measurement system
++ dod contractors
 - project leader
 - boeing company
-giga bacquerel
-pulse generator
-flux rad
-instrumentation system
++ giga bacquerel
++ pulse generator
++ flux rad
++ instrumentation system
 - apparent conflict
-mechanical engineering
-computer models
-velocity vector
-fluence krad
++ mechanical engineering
++ computer models
++ velocity vector
++ fluence krad
 - d associates
-computer system
++ computer system
 - cents t
-mass spectrometer
-applied voltage
++ mass spectrometer
++ applied voltage
 - nwer subtask
-particle diameter
-short circuit
-environmental factors
-nuclear reactor
++ particle diameter
++ short circuit
++ environmental factors
++ nuclear reactor
 - direct contact
-solar activity
-cubic centimeter
++ solar activity
++ cubic centimeter
 - cost estimates
-conversion factor
-mm diameter
-protective clothing
-breakdown voltage
-analysis center
++ conversion factor
++ mm diameter
++ protective clothing
++ breakdown voltage
++ analysis center
 - ft ibf
-protection factor
++ protection factor
 - cents °
-thermal damage
++ thermal damage
 - program listing
-threshold voltage
++ threshold voltage
 - principal investigators
-circular cylinder
++ circular cylinder
 - technical advice
 - r&d associates
-nuclear engineering
-operation buster
++ nuclear engineering
++ operation buster
 - ° rads
 - abstract abstract
-safety factor
++ safety factor
 - public law
-compton scattering
-afrri-triga reactor
-fortran program
-underground testing
-nervous system
-data storage
++ compton scattering
++ afrri-triga reactor
++ fortran program
++ underground testing
++ nervous system
++ data storage
 - inch diameter
-bias voltage
++ bias voltage
 - complete system
-gate voltage
++ gate voltage
 - effects program
-computer modeling
-concepts office
-defense contractors
-linear accelerator
-outside diameter
++ computer modeling
++ concepts office
++ defense contractors
++ linear accelerator
++ outside diameter
 - data file
-fallout shelter
-constitutive models
++ fallout shelter
++ constitutive models
 - data input
-integrated circuit
-energy storage
++ integrated circuit
++ energy storage
 - report numger
-data channels
-neutron detectors
-data recording
-atmospheric testing
-detector system
-emergency planning
-attenuation factor
-communications system
-radiation testing
-applied physics
++ data channels
++ neutron detectors
++ data recording
++ atmospheric testing
++ detector system
++ emergency planning
++ attenuation factor
++ communications system
++ radiation testing
++ applied physics
 - project director
-operating system
-test circuit
-scaling factor
-center conductor
-triga reactor
-laser system
-joule heating
-doe contractors
-thermal diffusivity
-test device
-blast simulator
-data scatter
-air sampling
-ground conductivity
-best estimates
++ operating system
++ test circuit
++ scaling factor
++ center conductor
++ triga reactor
++ laser system
++ joule heating
++ doe contractors
++ thermal diffusivity
++ test device
++ blast simulator
++ data scatter
++ air sampling
++ ground conductivity
+- best estimates
 - cents g
 - cents o
-electronic states
++ electronic states
 - program director
 - private sector
-mos capacitors
-weidlinger associates
-air conductivity
-electronic technology
-electrical resistivity
++ mos capacitors
++ weidlinger associates
++ air conductivity
++ electronic technology
++ electrical resistivity
 - s  
-electronic circuits
-military planning
-operations office
-nuclear winter
-cloud tracking
-weapons center
-peak voltage
-tn block
-linear system
-defense system
++ electronic circuits
++ military planning
++ operations office
++ nuclear winter
++ cloud tracking
++ weapons center
++ peak voltage
++ tn block
++ linear system
++ defense system
 - fice symbol
-test planning
-discrete ordinates
-experimental system
++ test planning
++ discrete ordinates
++ experimental system
 - ° rad
-energy coupling
-diode voltage
-operations analysis
++ energy coupling
++ diode voltage
++ operations analysis
 - annual meeting
-static loading
++ static loading
 - deputy commander
 - data summary
 - decision making
 - fire fighting
-beam diameter
-dod directive
-scale factors
-critical factor
-grid spacing
-tion system
-mathematical modeling
-open circuit
-p-type silicon
-marx generator
-international system
-ing system
-sampling program
-auch contractor
-complex system
-communication system
-telemetry system
-test system
++ beam diameter
++ dod directive
++ scale factors
++ critical factor
++ grid spacing
+- tion system
++ mathematical modeling
++ open circuit
++ p-type silicon
++ marx generator
++ international system
+-ing system
++ sampling program
++ auch contractor
++ complex system
++ communication system
++ telemetry system
++ test system
 - ° pascal
 - cents m
-reduction factor
-electrical contact
-control center
-air conditioning
++ reduction factor
++ electrical contact
++ control center
++ air conditioning
 - interested reader
-technical program
-n-type silicon
++ technical program
++ n-type silicon
 - preliminary estimates
-impulsive loading
-computer programming
++ impulsive loading
++ computer programming
 - associate director
-dynamic testing
-electrical circuit
-flat plates
-bridge circuit
-analysis program
-cosati cooes
++ dynamic testing
++ electrical circuit
++ flat plates
++ bridge circuit
++ analysis program
++ cosati cooes
 - rough estimates
 - reasonable estimates
-bipolar transistors
-vacuum pump
-emp simulator
++ bipolar transistors
++ vacuum pump
++ emp simulator
 - military service
 - figures 2a
-medical center
++ medical center
 - paper copies
-data system
++ data system
 - chairman director
-sills building
-heat exchanger
-dose estimates
-engineering center
-magnetic equator
-neutron detector
-small diameter
-neutron scattering
-radiation monitoring
-early warning
++ sills building
++ heat exchanger
+- dose estimates
++ engineering center
++ magnetic equator
++ neutron detector
+-small diameter
++ neutron scattering
++ radiation monitoring
++ early warning
 - randolph road
-operational planning
-radiation detector
-weapons testing
-computer storage
++ operational planning
++ radiation detector
++ weapons testing
++ computer storage
 - times t
-semiconductor device
-human factors
-cube-root scaling
++ semiconductor device
+- human factors
++ cube-root scaling
 - ofthe author
-calibration factor
-agbabian associates
-emp coupling
-prototype system
-measurement program
-continuous monitoring
-core storage
-director director
-rapid heating
-fortran listing
-data format
++ calibration factor
++ agbabian associates
++ emp coupling
++ prototype system
++ measurement program
++ continuous monitoring
++ core storage
+- director director
+- rapid heating
++ fortran listing
++ data format
 - alternate approach
-physical system
-hydrostatic loading
++ physical system
++ hydrostatic loading
 - accurate estimates
-electronic system
-thermonuclear device
-ventilation system
++ electronic system
++ thermonuclear device
++ ventilation system
 - single parameter
-scaling factors
-signal conditioning
++ scaling factors
++ signal conditioning
 - fiscal years
-threshold detectors
++ threshold detectors
 - ment system
 - personal authors
-steel cylinder
-engineer center
-supply voltage
-firing system
++ steel cylinder
++ engineer center
++ supply voltage
++ firing system
 - serious damage
 - cents f
 mos capacitor
@@ -438,7 +438,7 @@ structural system
 figures 5a
 ° abstract
 - cents r
-times greater
+- times greater
 error message
 transportation system
 - team leader
@@ -909,7 +909,7 @@ aerosol scattering
 basic factors
 armored school
 principal contributors
-much greater
+- much greater
 floor system
 short phrases
 data availability
@@ -1217,7 +1217,7 @@ aluminum coating
 earlier estimates
 band-pass filter
 digital recorder
-magnitude greater
+- magnitude greater
 control valve
 civil service
 microwave system
@@ -2125,8 +2125,8 @@ direction finding
 internal coupling
 enhancement factors
 process monitoring
-puter system
-distances greater
+- puter system
+- distances greater
 systems model
 nuclear models
 antiaircraft artillery
@@ -2203,14 +2203,14 @@ electronic counters
 x-ray scattering
 times background
 human lymphocytes
-kile pascal
+- kile pascal
 emergency generators
 mutual coupling
 dt ra
 laser gas
 dose mapping
 flash bulb
-m +2
+- m +2
 code package
 background activity
 detectable radioactivity

@@ -201,8 +201,6 @@ class Annotations(object):
         self.docid = docid
         self.fname = fname
         self.doc = doc
-        #if sentid is not None:
-        #    self.docid = f"{self.docid:08}-{self.sentid:06}"
         self.text = text
         self.authors = []
         self.year = None
