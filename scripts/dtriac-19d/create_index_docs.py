@@ -393,7 +393,7 @@ class Annotations(object):
         self.doc = doc
         self.docid = docid
         if sentid is not None:
-            self.docid = f"{docid:08}-{sentid:06}"
+            self.docid = f"{self.docid:08}-{self.sentid:06}"
         self.text = text
         self.authors = []
         self.year = None
@@ -426,7 +426,7 @@ class Annotations(object):
             "docid": self.docid,
             "docname": self.fname,
             "!url_pdf": f"http://tarski.cs-i.brandeis.edu:8181/data/{self.docid}/pdf.pdf",
-            "!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{docid}_0001.png",
+            "!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{self.docid}_0001.png",
             "title": title,
             "year": year,
             "author": self.authors,
