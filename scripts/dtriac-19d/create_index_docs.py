@@ -93,8 +93,8 @@ class Document(object):
 
         """Build a single LIF object with all relevant annotations. The annotations
         themselves are stored in the Annotations object in self.annotations."""
-        self.id = Document.new_id()
         self.fname = fname
+        self.id = int(self.fname.split('/')[0])
         self.lif = Container(lif_file).payload
         self.meta = LIF(mta_file)
         #print(self.meta.metadata)
@@ -391,9 +391,9 @@ class Annotations(object):
     def __init__(self, fname, doc=None, docid=None, sentid=None, text=None):
         self.fname = fname
         self.doc = doc
-        self.docid = "%06d" % docid
+        self.docid = docid
         if sentid is not None:
-            self.docid = "%04d-%04d" % (docid, sentid)
+            self.docid = f"{docid:08}-{sentid:06}"
         self.text = text
         self.authors = []
         self.year = None
@@ -425,6 +425,8 @@ class Annotations(object):
             "text": self.text,
             "docid": self.docid,
             "docname": self.fname,
+            "!url_pdf": f"http://tarski.cs-i.brandeis.edu:8181/data/{self.docid}/pdf.pdf",
+            "!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{docid}_0001.png",
             "title": title,
             "year": year,
             "author": self.authors,
