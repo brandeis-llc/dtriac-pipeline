@@ -37,6 +37,11 @@ LATEST_DOC = 2020
 MONTHS = { 'january', 'february', 'march', 'april', 'may', 'june',
            'july', 'august', 'september', 'october', 'november', 'december' }
 
+# Common first names and set of names to be filtered
+# TODO: this is copied from create_index_docs.py, refactor this
+FIRST_NAMES = 'data/names/common-first-names.txt'
+NAMES_TO_FILTER = set()
+
 
 def generate_metadata(data_dir, fname):
 
@@ -79,6 +84,11 @@ def _get_authors(ner_view, window):
             if anno.end <= window[1]:
                 authors.append(anno.features['word'])
     authors = [a for a in authors if ' ' in a]
+    #length1 = len(authors)
+    authors = [a for a in authors if not filter_name(a)]
+    #length2 = len(authors)
+    #if length2 < length1:
+    #    print(length1, length2)
     #print('   ', authors)
     return authors
 
@@ -115,7 +125,29 @@ def get_year(date):
     return 0
 
 
+def filter_name(name):
+    # remove some names: common first names, Jr and Sr
+    if (name.lower() in NAMES_TO_FILTER
+        or name in ('Jr', 'Jr.', 'Sr', 'Sr.')):
+        return True
+    # Roads tend to be recognized as names, we don't like that
+    if name.endswith(' Road'):
+        return True
+    return False
+
+
+def load_first_names():
+    # TODO: copied from create_index_docs.py, refactor this
+    for line in open(FIRST_NAMES):
+        if line.startswith('#'):
+            continue
+        (rank, male, count1, female, count2) = line.strip().split('\t')
+        NAMES_TO_FILTER.add(male.lower())
+        NAMES_TO_FILTER.add(female.lower())
+
+
 if __name__ == '__main__':
 
     data_dir, filelist, start, end, crash = get_options()
+    load_first_names()
     process_list(data_dir, filelist, start, end, crash, generate_metadata)

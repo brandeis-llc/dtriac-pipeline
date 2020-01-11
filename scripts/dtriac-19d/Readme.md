@@ -57,6 +57,19 @@ Running the model on LIF files:
 $ python3 generate_topics.py -d $DATA -f files-random.txt -e 16000
 ```
 
+## Running CoreNLP
+
+To be added.
+
+
+## Sentence typing
+
+This requires the sentence splitting results of the CoreNLP step. You also to load one NLTK resource:
+
+```python
+>>> nltk.download('words')
+```
+
 
 ## Running the Tarsqi Toolkit
 
