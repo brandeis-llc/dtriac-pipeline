@@ -64,11 +64,12 @@ def create_document(data_dir, fname):
     ner_file = os.path.join(data_dir, 'ner', subdir, '%s.ner.lif' % subdir)
     sen_file = os.path.join(data_dir, 'sen', subdir, '%s.sen.lif' % subdir)
     tex_file = os.path.join(data_dir, 'tex', subdir, '%s.lup.lif' % subdir)
+    wik_file = os.path.join(data_dir, 'wik', subdir, '%s.wik.lif' % subdir)
     if not os.path.exists(lif_file):
         print('Skipping...  %s' % fname)
     else:
         doc = Document(fname, lif_file, mta_file, top_file,
-                       ner_file, sen_file, tex_file)
+                       ner_file, sen_file, tex_file, wik_file)
         doc.write(os.path.join(data_dir, 'ela'))
 
 
@@ -84,7 +85,7 @@ def load_first_names():
 class Document(object):
 
     def __init__(self, fname, lif_file, mta_file,
-                 top_file, ner_file, sen_file, tex_file):
+                 top_file, ner_file, sen_file, tex_file, wik_file):
 
         """Build a single LIF object with all relevant annotations. The annotations
         themselves are stored in the Annotations object in self.annotations."""
@@ -92,6 +93,7 @@ class Document(object):
         self.fname = fname
         self.lif = Container(lif_file).payload
         self.meta = LIF(mta_file)
+        self.wikis = LIF(wik_file).metadata['wikified_es']
         self._add_views(ner_file, sen_file, tex_file, top_file)
         self.lif.metadata["filename"] = self.fname
         self.lif.metadata["year"] = self._get_year()
@@ -227,6 +229,8 @@ class Annotations(object):
         self.text = text
         self.authors = []
         self.year = None
+        self.wikis = doc.wikis
+        self.wiki1 = doc.wikis[0]
         self.topics = []
         self.topic_elements = []
         self.sentences = []
@@ -256,6 +260,8 @@ class Annotations(object):
             "!url_cover": "%s:5100/query/%s_0001.png" % (TARSKI_URL, self.docid),
             #"!url_pdf": f"http://tarski.cs-i.brandeis.edu:8181/data/{self.docid}/pdf.pdf",
             #"!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{self.docid}_0001.png",
+            "ground_best": self.wiki1,
+            "ground_more": self.wikis,
             "year": year,
             "author": self.authors,
             "topic": self.topics,
