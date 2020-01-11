@@ -1,0 +1,158 @@
+{
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "!url_cover": {
+          "type": "keyword",
+          "index": false
+        },
+        "!url_pdf": {
+          "type": "keyword",
+          "index": false
+        },
+        "!url_tes": {
+          "type": "keyword",
+          "index": false
+        },
+        "author": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "docid": {
+          "type": "integer",
+          "index": false
+        },
+        "docname": {
+          "type": "keyword",
+          "index": false
+        },
+        "ori_pages": {
+          "type": "integer",
+          "index": false
+        },
+        "ground_best": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "ground_more": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "location": {
+          "properties": {
+            "offsets": {
+              "type": "keyword",
+              "index": false
+            },
+            "text": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        },
+        "organization": {
+          "properties": {
+            "offsets": {
+              "type": "keyword",
+              "index": false
+            },
+            "text": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        },
+        "person": {
+          "properties": {
+            "offsets": {
+              "type": "keyword",
+              "index": false
+            },
+            "text": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        },
+        "technology": {
+          "properties": {
+            "offsets": {
+              "type": "keyword",
+              "index": false
+            },
+            "text": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            }
+          }
+        },
+        "text": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "topic": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "topic_element": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "year": {
+          "type": "date",
+          "format": "yyyy"
+        }
+      }
+    }
+  }
+}

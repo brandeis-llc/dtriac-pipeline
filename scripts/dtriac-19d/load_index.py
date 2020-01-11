@@ -44,8 +44,19 @@ if __name__ == '__main__':
         source_directory = sys.argv[2]
     else:
         exit('ERROR: missing arguments\nUsage: python load_index.py INDEX_NAME DIRECTORY\n')
+    if len(sys.argv) > 3:
+        mapping_fname = sys.argv[3]
+    else:
+        mapping_fname = None
+
 
     docs = read_documents(source_directory)
     idx = Index(index_name)
-    print("Loading documents into the index...")
+    if mapping_fname is not None:
+        idx.es.indices.delete(index=index_name, ignore=[400, 404])
+        mappings = json.load(open(mapping_fname))
+        idx.es.indices.create(index_name, body=mappings)
     idx.load(docs)
+
+
+    print("Loading documents into the index...")
