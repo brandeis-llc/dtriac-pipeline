@@ -53,6 +53,8 @@ SCORES_FILE = 'classify.MaxEnt.out.s4.scores.sum.az'
 MIN_SCORE = 0.5
 MIN_COUNT = 5
 
+# only use wiki titles if they are associated with at least this number of
+# documents
 MIN_WIKI_TITLE_COUNT = 10
 
 

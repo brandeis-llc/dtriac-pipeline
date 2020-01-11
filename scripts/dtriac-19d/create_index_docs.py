@@ -18,6 +18,9 @@ mta   metadata (year and author)
 wik   wiki grounding
 ela   output
 
+
+TODO: split multiple names if there is an intervening new line
+
 """
 
 import os, sys, json
@@ -29,6 +32,10 @@ from utils import time_elapsed, elements, ensure_directory, print_element, get_o
 
 
 TARSKI_URL = 'http://tarski.cs-i.brandeis.edu'
+
+# Common first names and set of names to be filtered
+FIRST_NAMES = 'data/names/common-first-names.txt'
+NAMES_TO_FILTER = set()
 
 
 @time_elapsed
@@ -63,6 +70,15 @@ def create_document(data_dir, fname):
         doc = Document(fname, lif_file, mta_file, top_file,
                        ner_file, sen_file, tex_file)
         doc.write(os.path.join(data_dir, 'ela'))
+
+
+def load_first_names():
+    for line in open(FIRST_NAMES):
+        if line.startswith('#'):
+            continue
+        (rank, male, count1, female, count2) = line.strip().split('\t')
+        NAMES_TO_FILTER.add(male.lower())
+        NAMES_TO_FILTER.add(female.lower())
 
 
 class Document(object):
@@ -162,6 +178,13 @@ class Document(object):
             entity.text = self.get_text(entity)
             category = entity.features.get('category')
             if category == 'person':
+                # remove some names: common first names, Jr and Sr
+                if (entity.text.lower() in NAMES_TO_FILTER
+                    or entity.text in ('Jr', 'Jr.', 'Sr', 'Sr.')):
+                    continue
+                # Roads tend to be recognized as names, we don't like that
+                if entity.text.endswith(' Road'):
+                    continue
                 self.annotations.persons.add(entity)
             elif category == 'location':
                 self.annotations.locations.add(entity)
@@ -350,4 +373,5 @@ def _add_value(json_object, field, value):
 if __name__ == '__main__':
 
     data_dir, filelist, start, end, crash = get_options()
+    load_first_names()
     create_documents(data_dir, filelist, start, end, crash=crash)
