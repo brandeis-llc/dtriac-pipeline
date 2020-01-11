@@ -249,6 +249,20 @@ class Annotations(object):
                len(self.organizations), len(self.events), len(self.times),
                len(self.relations), len(self.topics))
 
+    def _get_pages(self):
+        # what a hack job...
+        # well, as long as pdfinfo is there it is fine, we could glob the page
+        # files and get the largest number
+        pdfinfo_fname = '/data/dtriac/dtriac-19d/all/%s/pdfinfo.txt' % self.docid
+        #pdfinfo_fname = f'/data/dtriac/dtriac-19d/all/{self.docid}/pdfinfo.txt'
+        if os.path.exists(pdfinfo_fname):
+            with open(pdfinfo_fname, 'r') as pdfinfo_f:
+                for line in pdfinfo_f:
+                    if line.startswith('Pages:'):
+                        return line.split()[1]
+        else:
+            return -1
+
     def write(self, fname, year=None):
         """Writes the document with the search fields to a json file."""
         json_object = {
@@ -258,10 +272,11 @@ class Annotations(object):
             "!url_pdf": "%s:8181/data/%s/pdf.pdf" % (TARSKI_URL, self.docid),
             "!url_tes": "%s:8181/data/%s/tesseract.txt" % (TARSKI_URL, self.docid),
             "!url_cover": "%s:5100/query/%s_0001.png" % (TARSKI_URL, self.docid),
-            #"!url_pdf": f"http://tarski.cs-i.brandeis.edu:8181/data/{self.docid}/pdf.pdf",
-            #"!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{self.docid}_0001.png",
+            # "!url_pdf": f"http://tarski.cs-i.brandeis.edu:8181/data/{self.docid}/pdf.pdf",
+            # "!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{self.docid}_0001.png",
             "ground_best": self.wiki1,
             "ground_more": self.wikis,
+            "ori_pages": self._get_pages(),
             "year": year,
             "author": self.authors,
             "topic": self.topics,
