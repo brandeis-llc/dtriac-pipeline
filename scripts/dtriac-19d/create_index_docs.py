@@ -37,6 +37,9 @@ TARSKI_URL = 'http://tarski.cs-i.brandeis.edu'
 FIRST_NAMES = 'data/names/common-first-names.txt'
 NAMES_TO_FILTER = set()
 
+# somewhat hackish way to get to the number of pages
+PDFINFO_FILE_PATTERN = '/data/dtriac/dtriac-19d/all/%s/pdfinfo.txt'
+
 
 @time_elapsed
 def create_documents(data_dir, filelist, start, end, crash=False):
@@ -68,7 +71,7 @@ def create_document(data_dir, fname):
     if not os.path.exists(lif_file):
         print('Skipping...  %s' % fname)
     else:
-        doc = Document(fname, lif_file, mta_file, top_file,
+        doc = Document(fname, data_dir, lif_file, mta_file, top_file,
                        ner_file, sen_file, tex_file, wik_file)
         doc.write(os.path.join(data_dir, 'ela'))
 
@@ -84,13 +87,14 @@ def load_first_names():
 
 class Document(object):
 
-    def __init__(self, fname, lif_file, mta_file,
+    def __init__(self, fname, data_dir, lif_file, mta_file,
                  top_file, ner_file, sen_file, tex_file, wik_file):
 
         """Build a single LIF object with all relevant annotations. The annotations
         themselves are stored in the Annotations object in self.annotations."""
         self.id = int(os.path.split(fname)[0])
         self.fname = fname
+        self.data_dir = data_dir
         self.lif = Container(lif_file).payload
         self.meta = LIF(mta_file)
         self.wikis = LIF(wik_file).metadata['wikified_es']
@@ -252,9 +256,10 @@ class Annotations(object):
     def _get_pages(self):
         # what a hack job...
         # well, as long as pdfinfo is there it is fine, we could glob the page
-        # files and get the largest number
-        pdfinfo_fname = '/data/dtriac/dtriac-19d/all/%s/pdfinfo.txt' % self.docid
-        #pdfinfo_fname = f'/data/dtriac/dtriac-19d/all/{self.docid}/pdfinfo.txt'
+        # files and get the largest number (actually, that is only possible if
+        # we hand in the directory of all sources, would also be hackish if we
+        # hard code that).
+        pdfinfo_fname = PDFINFO_FILE_PATTERN % self.docid
         if os.path.exists(pdfinfo_fname):
             with open(pdfinfo_fname, 'r') as pdfinfo_f:
                 for line in pdfinfo_f:
@@ -274,8 +279,8 @@ class Annotations(object):
             "!url_cover": "%s:5100/query/%s_0001.png" % (TARSKI_URL, self.docid),
             # "!url_pdf": f"http://tarski.cs-i.brandeis.edu:8181/data/{self.docid}/pdf.pdf",
             # "!url_cover": f"http://tarski.cs-i.brandeis.edu:5100/query/{self.docid}_0001.png",
-            "ground_best": self.wiki1,
-            "ground_more": self.wikis,
+            "ground_best": self.wiki1['title'],
+            "ground_more": [w['title'] for w in self.wikis],
             "ori_pages": self._get_pages(),
             "year": year,
             "author": self.authors,
@@ -382,13 +387,6 @@ class IndexedAnnotations(object):
             if p not in self.doc.allowed_offsets:
                 return False
         return True
-
-
-def _add_value(json_object, field, value):
-    """Add a value to a json object (implemented as a Python dictionary), but only
-    if that value is not empty."""
-    if value:
-        json_object[field] = value
 
 
 if __name__ == '__main__':
