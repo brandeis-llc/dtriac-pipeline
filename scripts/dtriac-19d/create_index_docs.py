@@ -27,17 +27,21 @@ import os, sys, json
 from pprint import pformat
 from collections import Counter
 
+# from geopy.geocoders import Nominatim
+
 from lif import LIF, Container, Annotation
 from utils import time_elapsed, elements, ensure_directory, print_element, get_options
+import resources
 
+# Commented out because using this service takes too long
+# Consider collecting all locations and then running the service on them off-line
+# GEOLOCATOR = Nominatim()
 
 TARSKI_URL = 'http://tarski.cs-i.brandeis.edu'
 
-# Common first names and set of names to be filtered
-FIRST_NAMES = 'data/names/common-first-names.txt'
-NAMES_TO_FILTER = set()
+NAMES = resources.Names()
 
-# somewhat hackish way to get to the number of pages
+# this file gets you to the number of pages
 PDFINFO_FILE_PATTERN = '/data/dtriac/dtriac-19d/all/%s/pdfinfo.txt'
 
 
@@ -74,15 +78,6 @@ def create_document(data_dir, fname):
         doc = Document(fname, data_dir, lif_file, mta_file, top_file,
                        ner_file, sen_file, tex_file, wik_file)
         doc.write(os.path.join(data_dir, 'ela'))
-
-
-def load_first_names():
-    for line in open(FIRST_NAMES):
-        if line.startswith('#'):
-            continue
-        (rank, male, count1, female, count2) = line.strip().split('\t')
-        NAMES_TO_FILTER.add(male.lower())
-        NAMES_TO_FILTER.add(female.lower())
 
 
 class Document(object):
@@ -184,15 +179,16 @@ class Document(object):
             entity.text = self.get_text(entity)
             category = entity.features.get('category')
             if category == 'person':
-                # remove some names: common first names, Jr and Sr
-                if (entity.text.lower() in NAMES_TO_FILTER
-                    or entity.text in ('Jr', 'Jr.', 'Sr', 'Sr.')):
+                if NAMES.filter(entity.text):
                     continue
-                # Roads tend to be recognized as names, we don't like that
-                if entity.text.endswith(' Road'):
-                    continue
+                #NAMES.normalize(entity.text)
                 self.annotations.persons.add(entity)
             elif category == 'location':
+                # this takes too long in that it sends out a request for each location
+                # print(entity)
+                # loc = GEOLOCATOR.geocode(entity.text)
+                # if loc is not None:
+                #     print('   ', loc.address)
                 self.annotations.locations.add(entity)
             elif category == 'organization':
                 self.annotations.organizations.add(entity)
@@ -392,5 +388,4 @@ class IndexedAnnotations(object):
 if __name__ == '__main__':
 
     data_dir, filelist, start, end, crash = get_options()
-    load_first_names()
     create_documents(data_dir, filelist, start, end, crash=crash)
