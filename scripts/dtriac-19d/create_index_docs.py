@@ -351,6 +351,11 @@ class IndexedAnnotations(object):
             coordinates = anno.features.get('coordinates')
             if coordinates is not None:
                 obj['coordinates'] = coordinates
+            # TODO: also a bit hackish, but we need to get the text right for
+            # technologies with normalized names
+            normalized_name = anno.features.get('term_normalized')
+            if normalized_name is not None:
+                anno.text = normalized_name
             annos.setdefault(anno.text, []).append(obj)
         answer = []
         for anno in annos:

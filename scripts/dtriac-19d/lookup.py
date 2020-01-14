@@ -155,10 +155,16 @@ def _lookup_technologies_in_tokens(lif, tokens, tex_view):
         pairs = [(_get_text_from_tokens(tokens, i, i + j), j) for j in range(2,8)]
         for w, length in pairs:
             if w in TECHNOLOGIES.terms:
-                anno = _create_annotation(lif, tokens, w, i, length, "technology")
+                #if w in TECHNOLOGIES.word2lemma:
+                #    print(w)
+                term = TECHNOLOGIES.word2lemma.get(w, w)
+                anno = _create_annotation(lif, tokens, w, term, i, length, "technology")
                 tex_view.annotations.append(anno)
             elif w in TECHNOLOGIES.wiki_terms:
-                anno = _create_annotation(lif, tokens, w, i, length, "wiki_term")
+                #if w in TECHNOLOGIES.word2lemma:
+                #    print(w)
+                term = TECHNOLOGIES.word2lemma.get(w, w)
+                anno = _create_annotation(lif, tokens, w, term, i, length, "wiki_term")
                 tex_view.annotations.append(anno)
 
 
@@ -166,7 +172,7 @@ def _get_text_from_tokens(tokens, p1, p2):
     return ' '.join([t.features.get('word') for t in tokens[p1:p2]])
 
 
-def _create_annotation(lif, tokens, w, i, length, ttype):
+def _create_annotation(lif, tokens, w, term, i, length, ttype):
     p1, p2, w_in_text = _get_match_information(lif, tokens, i, length)
     if DEBUG:
         OUT.write("%s\t%s\t%s\n" % (p1, p2, w))
@@ -175,6 +181,8 @@ def _create_annotation(lif, tokens, w, i, length, ttype):
                  "@type": 'http://vocab.lappsgrid.org/Technology',
                  "start": p1, "end": p2,
                  "features": { "term": w, "type": ttype }}
+    if w != term:
+        json_obj['features']['term_normalized'] = term
     return Annotation(json_obj)
 
 
@@ -208,6 +216,7 @@ class TechnologyOntology(object):
         self.terms = set()
         self.stoplist = set()
         self.wiki_terms = _technologies_from_wiki_terms_file()
+        self.word2lemma = {}
         for line in open(TECHNOLOGY_ANNOTATIONS):
             if line.startswith('- '):
                 self.stoplist.add(line.strip()[2:])
@@ -215,6 +224,7 @@ class TechnologyOntology(object):
             count, score, term = line.strip().split('\t')
             if not self.filter(term) and not term in self.stoplist:
                 self.terms.add(term)
+        self.normalize()
 
     def __len__(self):
         return len(self.terms)
@@ -242,6 +252,19 @@ class TechnologyOntology(object):
             or len(term) > 50):
             return True
         return False
+
+    def normalize(self):
+        """For all terms, check wether they have a singular version and if so add
+        the mapping from plural to singular to self.word2lemma."""
+        def normalize_term(term):
+            if term.endswith('s'):
+                lemma = term[:-1]
+                if lemma in self.terms or lemma in self.wiki_terms:
+                    self.word2lemma[term] = lemma
+        for term in self.terms:
+            normalize_term(term)
+        for term in self.wiki_terms:
+            normalize_term(term)
 
 
 if __name__ == '__main__':

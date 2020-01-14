@@ -57,6 +57,10 @@ class Names(object):
         # all initials is either a location or a part of a name
         if self.initials_only(name):
             return True
+        # no names shorter than three characters
+        # no names with a period and shorter than five characters
+        if len(name) < 3 or ('.' in name and len(name) < 5):
+            return True
         return False
 
     @staticmethod
