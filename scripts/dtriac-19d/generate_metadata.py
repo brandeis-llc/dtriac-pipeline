@@ -63,7 +63,7 @@ def generate_metadata(data_dir, fname):
     ner_view = lif_ner.get_view('v2')
 
     window = _get_window(page_view)
-    lif.metadata["authors"] = _get_authors(ner_view, window)
+    lif.metadata["authors"] = _get_authors(lif, ner_view, window)
     lif.metadata["year"] = _get_year(ner_view, window)
 
     lif_mta.write(fname=mta_file, pretty=True)
@@ -76,11 +76,12 @@ def _get_window(page_view):
     return (0, min(METADATA_WINDOW_MAXIMUM, page_view.annotations[METADATA_PAGES].end))
 
 
-def _get_authors(ner_view, window):
+def _get_authors(lif, ner_view, window):
     authors = []
     for anno in ner_view.annotations:
         if anno.features.get('category') == 'person':
             if anno.end <= window[1]:
+                NAMES.split(lif, anno)
                 authors.append(anno.features['word'])
     authors = [a for a in authors if ' ' in a]
     authors = [a for a in authors if not NAMES.filter(a)]

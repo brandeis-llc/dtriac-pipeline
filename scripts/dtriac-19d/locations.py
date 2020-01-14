@@ -38,6 +38,16 @@ raw. The last of those is a json object that contains 'boundingbox', 'lat' and
 TODO: first time I ran this on just those locations that occur 10 times or more
 in LOCATIONS_FILE, may want to do this later for those that occur 5-9 times.
 
+Had some problems with geonames, installed it on Python3 using pip3 and when I
+imported it I got an erro that indicated there was a print statement in the
+code. For geonames you also need to do some legwork first to get the Google API
+key:
+
+- https://pypi.org/project/geonames/
+- https://geocoder.readthedocs.io/providers/GeoNames.html
+- https://developers.google.com/maps/documentation/geocoding/get-api-key
+- https://developers.google.com/maps/gmp-get-started
+
 
 == Creating locations index
 
@@ -87,7 +97,7 @@ def process_locations(outfile, limit):
             locations_processed += 1
             if locations_processed > limit:
                 break
-            sys.stdout.write("%04d  %05d  %s\n" % (limit, count, location))
+            sys.stdout.write("%04d  %05d  %s\n" % (locations_processed, count, location))
             try:
                 result = GEOLOCATOR.geocode(location)
             except:

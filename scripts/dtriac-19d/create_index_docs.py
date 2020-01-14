@@ -27,19 +27,15 @@ import os, sys, json
 from pprint import pformat
 from collections import Counter
 
-# from geopy.geocoders import Nominatim
-
 from lif import LIF, Container, Annotation
 from utils import time_elapsed, elements, ensure_directory, print_element, get_options
 import resources
 
-# Commented out because using this service takes too long
-# Consider collecting all locations and then running the service on them off-line
-# GEOLOCATOR = Nominatim()
-
 TARSKI_URL = 'http://tarski.cs-i.brandeis.edu'
 
 NAMES = resources.Names()
+LOCATIONS = resources.Locations()
+
 
 # this file gets you to the number of pages
 PDFINFO_FILE_PATTERN = '/data/dtriac/dtriac-19d/all/%s/pdfinfo.txt'
@@ -181,14 +177,11 @@ class Document(object):
             if category == 'person':
                 if NAMES.filter(entity.text):
                     continue
-                #NAMES.normalize(entity.text)
+                # NAMES.normalize(entity.text)
                 self.annotations.persons.add(entity)
             elif category == 'location':
-                # this takes too long in that it sends out a request for each location
-                # print(entity)
-                # loc = GEOLOCATOR.geocode(entity.text)
-                # if loc is not None:
-                #     print('   ', loc.address)
+                coordinates = LOCATIONS.get_coordinates(entity.text)
+                entity.features['coordinates'] = coordinates
                 self.annotations.locations.add(entity)
             elif category == 'organization':
                 self.annotations.organizations.add(entity)
@@ -301,7 +294,6 @@ class IndexedAnnotations(object):
     and a couple of dictionaries."""
 
     def __init__(self, doc, annotation_type):
-        #print(doc)
         self.doc = doc
         self.type = annotation_type
         self.size = 0
@@ -353,12 +345,22 @@ class IndexedAnnotations(object):
         annos = {}
         for anno in self.annotations:
             offsets = "%s-%s" % (anno.start, anno.end)
-            annos.setdefault(anno.text, []).append({"text": anno.text, "offsets": offsets})
+            obj = {"text": anno.text, "offsets": offsets}
+            # TODO: a bit hackish, but needed to deal with coordinates, which
+            # are the only feature we preserve for the index -- refactor this
+            coordinates = anno.features.get('coordinates')
+            if coordinates is not None:
+                obj['coordinates'] = coordinates
+            annos.setdefault(anno.text, []).append(obj)
         answer = []
         for anno in annos:
             instances = annos[anno]
             offsets = ' '.join([inst['offsets'] for inst in instances])
-            answer.append({"text": anno, "offsets": offsets})
+            obj =  {"text": anno, "offsets": offsets}
+            # TODO: see comment above
+            if "coordinates" in instances[0]:
+                obj["coordinates"] = instances[0]['coordinates']
+            answer.append(obj)
         return answer
 
     def get_index(self):

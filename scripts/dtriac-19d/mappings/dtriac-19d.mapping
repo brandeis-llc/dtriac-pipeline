@@ -67,7 +67,10 @@
                   "ignore_above": 256
                 }
               }
-            }
+            },
+	    "coordinates": {
+	      "type": "geo_point"
+	    }
           }
         },
         "organization": {
