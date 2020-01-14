@@ -81,7 +81,7 @@ def _get_authors(lif, ner_view, window):
     for anno in ner_view.annotations:
         if anno.features.get('category') == 'person':
             if anno.end <= window[1]:
-                NAMES.split(lif, anno)
+                # NAMES.split(lif, anno)
                 authors.append(anno.features['word'])
     authors = [a for a in authors if ' ' in a]
     authors = [a for a in authors if not NAMES.filter(a)]

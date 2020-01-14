@@ -52,7 +52,7 @@ class Names(object):
         # hack to deal with 'John J. Kingman Road' spillovers, should use a more
         # global approach and collect prefixes of names with roads
         if name.lower() in ('john j.', 'john j. kingman'):
-            print(name)
+            # print(name)
             return True
         # all initials is either a location or a part of a name
         if self.initials_only(name):
