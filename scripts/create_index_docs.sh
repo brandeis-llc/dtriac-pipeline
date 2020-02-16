@@ -1,7 +1,6 @@
 #! /bin/bash
 
-repo=/Users/marc/Desktop/projects/dtra/dtra-534
-#repo=/Users/marc/Documents/git/dtra/dtra-534
+repo=$1
 
 sample=$repo/sample-files.txt
 
@@ -16,5 +15,6 @@ top=$repo/samples/small-25-top
 
 #ela=$repo/samples/small-25-ela
 ela=$repo/samples/tmp
+mkdir -p $ela/documents
 
-python create_index_docs.py $lif $ner $tex $ttk $sen $rel $vnc $top $ela $sample
+python $repo/scripts/create_index_docs.py $lif $ner $tex $ttk $sen $rel $vnc $top $ela $sample

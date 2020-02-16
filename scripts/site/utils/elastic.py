@@ -8,6 +8,9 @@ so good.
 """
 
 import re
+import codecs
+import json
+
 from pprint import pprint
 from collections import Counter
 
