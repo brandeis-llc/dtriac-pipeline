@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request
 from pprint import pformat
+import json
 
 from utils.elastic import Index, Source
 from utils.query import query
@@ -15,6 +16,8 @@ STATS_FILE = 'data/stats.json'
 
 app = Flask(__name__)
 
+verbnetclass_dict = None
+verbnetclass_inversedict = None
 
 @app.route("/")
 def index():
@@ -23,8 +26,24 @@ def index():
     return render_template("index.html", stats=stats, kibana=kibana)
 
 
+def read_vnc_dict(dict_filename):
+    d = json.load(open(dict_filename))
+    id = {}
+    for verb, classes in d:
+        for cls in classes:
+            verbs = id.get(cls, [])
+            verbs.append(verb)
+            id[cls] = verbs
+    return d, id
+
+
 @app.route("/search", methods=['GET', 'POST'])
 def search():
+
+    global verbnetclass_dict
+    global verbnetclass_inversedict
+    if verbnetclass_dict is None and verbnetclass_inversedict is None:
+        verbnetclass_dict, verbnetclass_inversedict = read_vnc_dict(VERBNETCLASS_DICT)
     kibana = Kibana()
     search = get_var(request, "search")
     search_query = get_var(request, "query")
@@ -34,7 +53,7 @@ def search():
     visualize = False if get_var(request, "visualize") is None else True
     app.logger.debug("query=%s" % search_query)
     if search == "true" and search_query:
-        q = query(search_query)
+        q = query(search_query, verbnetclass_dict, verbnetclass_inversedict)
         app.logger.debug("query=%s" % q)
         result = INDEX_DOC.search(q)
         # app.logger.debug("scroll=%s" % result.scroll_id)

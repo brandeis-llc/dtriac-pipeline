@@ -44,7 +44,7 @@ def split_spec(spec):
     return { match_type: { field: value } }
 
 
-def query(spec):
+def query(spec, verbnetclass_dict=None, verbnetclass_inversedict=None):
     parts = [p.strip() for p in spec.strip().split()]
     if parts[0] == 'OR':
         return query_or(parts[1:])

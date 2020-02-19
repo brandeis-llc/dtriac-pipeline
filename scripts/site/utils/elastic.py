@@ -7,9 +7,10 @@ so good.
 
 """
 
-import json
 import re
-import os
+import codecs
+import json
+
 from pprint import pprint
 from collections import Counter
 from operator import attrgetter
