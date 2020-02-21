@@ -89,7 +89,7 @@ done
 # 2. then convert spv1 json to LIF
 
 for json in ${spv1_jsons}/*.json ; do 
-    python $(pwd)/scripts/create_lif.py ${spv1_jsons} ${raw_lifs} ${raw_texts}
+    python $(pwd)/create_lif.py ${spv1_jsons} ${raw_lifs} ${raw_texts}
 done
 
 # 3. now run corenlp NER
@@ -107,7 +107,7 @@ mkdir -p ${raw_texts}/clearwsd
 for t in ${raw_texts}/*.txt; do 
     txt=$(basename $t)
     (java -jar ${clearwsd_jar} -model ${clearwsd_model}  -input "${raw_texts}/$txt" -output "${raw_texts}/clearwsd/$txt" --anchor 
-    python ./scripts/vnc_to_lif.py "${raw_texts}/$txt" "${raw_texts}/clearwsd/$txt" > "${verbnet_tags}/$txt".lif 
+    python ./vnc_to_lif.py "${raw_texts}/$txt" "${raw_texts}/clearwsd/$txt" > "${verbnet_tags}/$txt".lif 
     rm ${raw_texts}/clearwsd/${txt}
     rm ${raw_texts}/${txt}.dep
     ) &
